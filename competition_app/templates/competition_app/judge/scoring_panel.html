@@ -1,0 +1,84 @@
+
+{% extends 'base.html' %}
+{% load scoring_filters %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">{{ competition.name }}</h1>
+            <h2 class="text-xl text-gray-600">Round: {{ round.name }}</h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-6 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Participant
+                        </th>
+                        {% for criterion in criteria %}
+                        <th class="px-6 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            {{ criterion.name }}
+                            <div class="text-xs text-gray-500 font-normal">Max: {{ criterion.max_score }}</div>
+                        </th>
+                        {% endfor %}
+                        <th class="px-6 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for participant in participants %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                {% if participant.profile_image %}
+                                <img class="h-10 w-10 rounded-full mr-3" src="{{ participant.profile_image.url }}" alt="{{ participant.name }}">
+                                {% endif %}
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">#{{ participant.number }} {{ participant.name }}</div>
+                                    <div class="text-sm text-gray-500">{{ participant.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <form method="POST" id="score-form-{{ participant.id }}">
+                            {% csrf_token %}
+                            <input type="hidden" name="participant_id" value="{{ participant.id }}">
+                            {% for criterion in criteria %}
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <input type="number" 
+                                       name="score_{{ participant.id }}_{{ criterion.id }}"
+                                       value="{{ participant_scores|get_item:participant.id|get_item:criterion.id|default:'' }}"
+                                       min="0" 
+                                       max="{{ criterion.max_score }}"
+                                       step="0.1"
+                                       class="w-20 px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500">
+                            </td>
+                            {% endfor %}
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button type="submit" 
+                                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                    Submit Scores
+                                </button>
+                            </td>
+                        </form>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Toast -->
+{% if messages %}
+<div class="fixed bottom-5 right-5">
+    {% for message in messages %}
+    <div class="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg mb-4">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

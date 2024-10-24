@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-2xl font-bold mb-6">Profile</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+                <div>
+                    <img class="w-32 h-32 rounded-full" src="https://ui-avatars.com/api/?name={{ user.username }}" alt="Profile photo">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Username</label>
+                    <p class="mt-1 text-gray-900">{{ user.username }}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Email</label>
+                    <p class="mt-1 text-gray-900">{{ user.email }}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Date Joined</label>
+                    <p class="mt-1 text-gray-900">{{ user.date_joined|date:"F j, Y" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

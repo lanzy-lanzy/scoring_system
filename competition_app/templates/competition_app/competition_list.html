@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Competitions{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header Section -->
+        <div class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-900">Competitions</h1>
+                <p class="mt-2 text-gray-600">Manage and view all competitions</p>
+            </div>
+            <a href="{% url 'create_competition' %}" 
+               class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 transform transition-all duration-200 hover:scale-105 shadow-lg">
+                Create Competition
+            </a>
+        </div>
+
+        <!-- Competition Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for competition in competitions %}
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all duration-200 hover:scale-105">
+                <div class="p-6">
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-xl font-bold text-gray-900">{{ competition.name }}</h3>
+                        <span class="px-3 py-1 text-sm rounded-full 
+                            {% if competition.status == 'ACTIVE' %}bg-green-100 text-green-800
+                            {% elif competition.status == 'DRAFT' %}bg-gray-100 text-gray-800
+                            {% elif competition.status == 'COMPLETED' %}bg-blue-100 text-blue-800
+                            {% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ competition.status }}
+                        </span>
+                    </div>
+                    <p class="mt-2 text-gray-600 line-clamp-2">{{ competition.description }}</p>
+                    
+                    <div class="mt-4 space-y-2">
+                        <div class="flex items-center text-sm text-gray-500">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            Start: {{ competition.start_date|date:"M d, Y" }}
+                        </div>
+                        <div class="flex items-center text-sm text-gray-500">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            End: {{ competition.end_date|date:"M d, Y" }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center text-sm text-gray-500">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                            {{ competition.participants.count }} Participants
+                        </div>
+                        <a href="{% url 'competition_detail' competition.id %}" 
+                           class="text-purple-600 hover:text-purple-700 font-medium">
+                            View Details →
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No competitions</h3>
+                <p class="mt-1 text-sm text-gray-500">Get started by creating a new competition.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

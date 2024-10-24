@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="flex h-screen bg-gray-100">
+    <!-- Main Content -->
+    <div class="flex-1 overflow-y-auto">
+        <div class="p-8">
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg">
+                    <div class="p-6">
+                        <h5 class="text-white text-sm font-semibold">Active Competitions</h5>
+                        <h2 class="text-white text-3xl font-bold mt-2">{{ active_competitions.count }}</h2>
+                    </div>
+                </div>
+                <div class="bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl shadow-lg">
+                    <div class="p-6">
+                        <h5 class="text-white text-sm font-semibold">Pending Scores</h5>
+                        <h2 class="text-white text-3xl font-bold mt-2">{{ pending_scores }}</h2>
+                    </div>
+                </div>
+                <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg">
+                    <div class="p-6">
+                        <h5 class="text-white text-sm font-semibold">Submitted Scores</h5>
+                        <h2 class="text-white text-3xl font-bold mt-2">{{ submitted_scores }}</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Competitions Section -->
+            <section id="active-competitions">
+                <h4 class="text-xl font-bold mb-4">Active Competitions</h4>
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Competition Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Round</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for competition in active_competitions %}
+                            {% for round in competition.rounds.all %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap">{{ competition.name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{ round.name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if round.status == 'ACTIVE' %}bg-green-100 text-green-800
+                                    {% elif round.status == 'PENDING' %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ round.status }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <a href="{% url 'scoring_panel' competition.id round.id %}" 
+                                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        Score
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}
