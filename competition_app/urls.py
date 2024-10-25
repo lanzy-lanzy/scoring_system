@@ -21,7 +21,9 @@ urlpatterns = [
 
 
     path('judge/dashboard/', views.judge_dashboard, name='judge_dashboard'),
-   path('judge/scoring-panel/<int:competition_id>/<int:round_id>/', views.scoring_panel, name='scoring_panel'),
+    path('judge/scoring-panel/<int:round_id>/', views.scoring_panel, name='scoring_panel'),
+
+   
 
 
 

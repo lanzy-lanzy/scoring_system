@@ -201,13 +201,27 @@ from .models import Judge, Competition, Round, Participant, Score, Criterion
 @login_required
 def judge_dashboard(request):
     judge = get_object_or_404(Judge, user=request.user)
-    active_competitions = Competition.objects.filter(status='ACTIVE')
+    
+    # Get all active competitions with their rounds
+    competitions = Competition.objects.filter(status='ACTIVE').prefetch_related('rounds')
+    
+    # Get scoring statistics
     pending_scores = Score.objects.filter(judge=judge, status='DRAFT').count()
     submitted_scores = Score.objects.filter(judge=judge, status='SUBMITTED').count()
     
+    # Prepare competition data with rounds
+    competition_data = []
+    for competition in competitions:
+        rounds = competition.rounds.all().order_by('order')
+        competition_data.append({
+            'competition': competition,
+            'rounds': rounds,
+            'participant_count': competition.participants.count(),
+        })
+    
     context = {
         'judge': judge,
-        'active_competitions': active_competitions,
+        'competition_data': competition_data,
         'pending_scores': pending_scores,
         'submitted_scores': submitted_scores,
     }
@@ -231,48 +245,42 @@ def settings_view(request):
     }
     return render(request, 'competition_app/settings.html', context)
 
+
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from .models import Round, Participant, Criterion, Score, Judge
+import json
+
 @login_required
-def scoring_panel(request, competition_id, round_id):
+def scoring_panel(request, round_id):
+    round_obj = get_object_or_404(Round, id=round_id)
     judge = get_object_or_404(Judge, user=request.user)
-    competition = get_object_or_404(Competition, id=competition_id)
-    round = get_object_or_404(Round, id=round_id)
-    participants = Participant.objects.filter(competition=competition)
-    criteria = Criterion.objects.filter(round=round)
     
-    if request.method == 'POST':
-        participant_id = request.POST.get('participant_id')
-        participant = get_object_or_404(Participant, id=participant_id)
-        
-        for criterion in criteria:
-            score_value = request.POST.get(f'score_{participant_id}_{criterion.id}')
-            Score.objects.update_or_create(
-                judge=judge,
-                participant=participant,
-                round=round,
-                criterion=criterion,
-                defaults={
-                    'value': score_value,
-                    'status': 'SUBMITTED'
-                }
-            )
-        messages.success(request, f'Scores submitted for {participant.name}')
-        return redirect('scoring_panel', competition_id=competition_id, round_id=round_id)
-
-    # Get existing scores for all participants
-    participant_scores = {}
-    for participant in participants:
-        scores = Score.objects.filter(
-            judge=judge,
-            participant=participant,
-            round=round
-        )
-        participant_scores[participant.id] = {score.criterion_id: score.value for score in scores}
-
+    participants = Participant.objects.filter(
+        competition=round_obj.competition,
+        status='ACTIVE'
+    ).order_by('number')
+    
+    criteria = Criterion.objects.filter(round=round_obj)
+    
+    # Get existing scores with proper structure
+    existing_scores = Score.objects.filter(
+        judge=judge,
+        criterion__round=round_obj
+    )
+    
+    # Create lookup dictionary for scores
+    score_lookup = {}
+    for score in existing_scores:
+        key = f"{score.participant_id}_{score.criterion_id}"
+        score_lookup[key] = score
+    
     context = {
-        'competition': competition,
-        'round': round,
+        'round': round_obj,
         'participants': participants,
         'criteria': criteria,
-        'participant_scores': participant_scores
+        'existing_scores': score_lookup,
+        'judge': judge
     }
     return render(request, 'competition_app/judge/scoring_panel.html', context)
