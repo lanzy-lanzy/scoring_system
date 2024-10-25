@@ -16,7 +16,10 @@ def get_remarks(score_lookup, key_pair):
     score = score_lookup.get(key)
     return score.remarks if score else ''
 
-@register.filter
+@register.filter(name='get_item')
 def get_item(dictionary, key):
+    """Get item from dictionary"""
+    if dictionary is None:
+        return None
     return dictionary.get(key)
     return score_lookup.get((participant_id, criterion_id), '')

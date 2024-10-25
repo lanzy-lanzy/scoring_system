@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Competition, Participant, Judge
+from .models import Competition, Participant, Judge, CompetitionResult
 from django.contrib.auth.models import User
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -100,31 +100,50 @@ from django.contrib.auth.decorators import login_required
 @login_required
 def create_competition(request):
     if request.method == 'POST':
-        competition = Competition.objects.create(
-            name=request.POST.get('name'),
-            description=request.POST.get('description'),
-            start_date=request.POST.get('start_date'),
-            end_date=request.POST.get('end_date'),
-            status=request.POST.get('status'),
-            created_by=request.user
-        )
-
-        # Handle rounds creation
-        round_names = request.POST.getlist('round_names[]')
-        round_orders = request.POST.getlist('round_orders[]')
-        round_weights = request.POST.getlist('round_weights[]')
-        round_statuses = request.POST.getlist('round_statuses[]')
-
-        for i in range(len(round_names)):
-            Round.objects.create(
-                competition=competition,
-                name=round_names[i],
-                order=round_orders[i],
-                weight_percentage=round_weights[i],
-                status=round_statuses[i]
+        with transaction.atomic():
+            competition = Competition.objects.create(
+                name=request.POST.get('name'),
+                description=request.POST.get('description'),
+                start_date=request.POST.get('start_date'),
+                end_date=request.POST.get('end_date'),
+                status=request.POST.get('status'),
+                created_by=request.user
             )
 
-        messages.success(request, 'Competition created successfully!')
+            # Handle rounds and criteria creation
+            round_names = request.POST.getlist('round_names[]')
+            round_orders = request.POST.getlist('round_orders[]')
+            round_weights = request.POST.getlist('round_weights[]')
+            round_statuses = request.POST.getlist('round_statuses[]')
+            
+            criterion_names = request.POST.getlist('criterion_names[]')
+            criterion_descriptions = request.POST.getlist('criterion_descriptions[]')
+            criterion_max_scores = request.POST.getlist('criterion_max_scores[]')
+
+            criteria_per_round = len(criterion_names) // len(round_names)
+
+            for i in range(len(round_names)):
+                round_obj = Round.objects.create(
+                    competition=competition,
+                    name=round_names[i],
+                    order=round_orders[i],
+                    weight_percentage=round_weights[i],
+                    status=round_statuses[i]
+                )
+
+                # Create criteria for this round
+                start_idx = i * criteria_per_round
+                end_idx = start_idx + criteria_per_round
+                
+                for j in range(start_idx, end_idx):
+                    Criterion.objects.create(
+                        round=round_obj,
+                        name=criterion_names[j],
+                        description=criterion_descriptions[j],
+                        max_score=criterion_max_scores[j]
+                    )
+
+        messages.success(request, 'Competition created successfully with rounds and criteria!')
         return redirect('competition_list')
 
     return render(request, 'competition_app/create_competition.html')
@@ -137,11 +156,19 @@ def competition_list(request):
 @login_required
 def competition_detail(request, competition_id):
     competition = get_object_or_404(Competition, id=competition_id)
-    rounds = competition.rounds.all().order_by('order')
-    return render(request, 'competition_app/competition_detail.html', {
+    rounds = competition.rounds.all().prefetch_related('criteria').order_by('order')
+    
+    context = {
         'competition': competition,
-        'rounds': rounds
-    })
+        'rounds': rounds,
+        'total_criteria': sum(round.criteria.count() for round in rounds),
+        'total_max_score': sum(
+            criterion.max_score 
+            for round in rounds 
+            for criterion in round.criteria.all()
+        )
+    }
+    return render(request, 'competition_app/competition_detail.html', context)
 
 from django.shortcuts import render, redirect
 from .models import Participant, Competition
@@ -254,33 +281,199 @@ import json
 
 @login_required
 def scoring_panel(request, round_id):
+      round_obj = get_object_or_404(Round, id=round_id)
+      judge = get_object_or_404(Judge, user=request.user)
+    
+      if request.method == 'POST':
+          with transaction.atomic():
+              participant_id = request.POST.get('participant_id')
+              participant = get_object_or_404(Participant, id=participant_id)
+              status = request.POST.get('status', 'SUBMITTED')
+            
+              total_score = 0
+              # Process scores for each criterion
+              for criterion in round_obj.criteria.all():
+                  score_value = float(request.POST.get(f'score_{participant_id}_{criterion.id}', 0))
+                  remarks = request.POST.get(f'remarks_{participant_id}_{criterion.id}', '')
+                  total_score += score_value
+                
+                  Score.objects.update_or_create(
+                      participant=participant,
+                      criterion=criterion,
+                      judge=judge,
+                      defaults={
+                          'score': score_value,
+                          'remarks': remarks,
+                          'status': status
+                      }
+                  )
+            
+              # Update or create CompetitionResult
+              CompetitionResult.objects.update_or_create(
+                  competition=round_obj.competition,
+                  participant=participant,
+                  round=round_obj,
+                  defaults={
+                      'total_score': total_score,
+                      'rank': 0  # Will be updated in calculate_rankings
+                  }
+              )
+            
+              calculate_rankings(round_obj)
+              messages.success(request, 'Scores saved successfully!')
+              return JsonResponse({'status': 'success'})
+    
+      # Get participants and criteria for the round
+      participants = Participant.objects.filter(
+          competition=round_obj.competition,
+          status='ACTIVE'
+      ).order_by('number')
+    
+      criteria = round_obj.criteria.all()
+    
+      # Get existing scores
+      existing_scores = Score.objects.filter(
+          judge=judge,
+          criterion__round=round_obj
+      ).select_related('participant', 'criterion')
+    
+      # Organize existing scores for easy lookup
+      score_lookup = {}
+      for score in existing_scores:
+          if score.participant_id not in score_lookup:
+              score_lookup[score.participant_id] = {}
+          score_lookup[score.participant_id][score.criterion_id] = score.score
+    
+      context = {
+          'round': round_obj,
+          'participants': participants,
+          'criteria': criteria,
+          'existing_scores': score_lookup,
+          'judge': judge,
+          'total_criteria': criteria.count(),
+          'max_possible_score': sum(criterion.max_score for criterion in criteria)
+      }
+    
+      return render(request, 'competition_app/judge/scoring_panel.html', context)
+@login_required
+def get_scoring_statistics(request, round_id):
     round_obj = get_object_or_404(Round, id=round_id)
     judge = get_object_or_404(Judge, user=request.user)
     
-    participants = Participant.objects.filter(
-        competition=round_obj.competition,
-        status='ACTIVE'
-    ).order_by('number')
-    
-    criteria = Criterion.objects.filter(round=round_obj)
-    
-    # Get existing scores with proper structure
-    existing_scores = Score.objects.filter(
+    stats = Score.objects.filter(
         judge=judge,
         criterion__round=round_obj
+    ).aggregate(
+        total_scores=Count('id'),
+        avg_score=Avg('score'),
+        submitted_scores=Count('id', filter=Q(status='SUBMITTED')),
+        draft_scores=Count('id', filter=Q(status='DRAFT'))
     )
     
-    # Create lookup dictionary for scores
-    score_lookup = {}
-    for score in existing_scores:
-        key = f"{score.participant_id}_{score.criterion_id}"
-        score_lookup[key] = score
+    return JsonResponse(stats)
+
+@login_required
+def submit_batch_scores(request, round_id):
+    if request.method == 'POST':
+        with transaction.atomic():
+            scores_data = json.loads(request.body)
+            judge = get_object_or_404(Judge, user=request.user)
+            
+            for score_entry in scores_data:
+                Score.objects.update_or_create(
+                    participant_id=score_entry['participant_id'],
+                    criterion_id=score_entry['criterion_id'],
+                    judge=judge,
+                    defaults={
+                        'score': score_entry['score'],
+                        'remarks': score_entry.get('remarks', ''),
+                        'status': 'SUBMITTED'
+                    }
+                )
+            
+            return JsonResponse({'status': 'success'})
     
+    return JsonResponse({'status': 'error'}, status=400)
+from django.db import models
+
+@login_required
+def results_list(request):
+    competitions = Competition.objects.prefetch_related(
+        'rounds',
+        'rounds__criteria',
+        'rounds__results',
+        'rounds__results__participant',
+        'participants'
+    ).filter(status__in=['ACTIVE', 'COMPLETED']).order_by('-created_at')
+
+    for competition in competitions:
+        for round in competition.rounds.all():
+            # Get results ordered by rank
+            round.ordered_results = round.results.all().order_by('rank')
+            
+            # Calculate statistics
+            scores = [result.total_score for result in round.ordered_results]
+            if scores:
+                round.stats = {
+                    'highest_score': max(scores),
+                    'average_score': sum(scores) / len(scores),
+                    'lowest_score': min(scores)
+                }
+            
+            # Get top 3 participants
+            round.top_three = round.ordered_results[:3]
+
     context = {
-        'round': round_obj,
-        'participants': participants,
-        'criteria': criteria,
-        'existing_scores': score_lookup,
-        'judge': judge
+        'competitions': competitions,
+        'total_competitions': competitions.count(),
+        'total_participants': Participant.objects.count(),
+        'total_judges': Judge.objects.count(),
     }
-    return render(request, 'competition_app/judge/scoring_panel.html', context)
+    
+    return render(request, 'competition_app/results_list.html', context)
+
+@login_required
+def competition_results_detail(request, competition_id):
+    competition = get_object_or_404(Competition.objects.prefetch_related(
+        'rounds',
+        'rounds__criteria',
+        'rounds__results',
+        'rounds__results__participant',
+        'participants'
+    ), id=competition_id)
+
+    # Calculate detailed statistics for each round
+    for round in competition.rounds.all():
+        round.participant_scores = {}
+        for participant in competition.participants.all():
+            scores = Score.objects.filter(
+                participant=participant,
+                criterion__round=round
+            ).select_related('criterion')
+            
+            round.participant_scores[participant.id] = {
+                'total': sum(score.score for score in scores),
+                'scores': {score.criterion_id: score.score for score in scores}
+            }
+
+    context = {
+        'competition': competition,
+        'rounds': competition.rounds.all(),
+    }
+    
+    return render(request, 'competition_app/competition_results_detail.html', context)
+
+def calculate_rankings(round_obj):
+    """Calculate and update rankings for a round"""
+    results = CompetitionResult.objects.filter(round=round_obj).order_by('-total_score')
+    
+    # Update ranks
+    current_rank = 1
+    previous_score = None
+    
+    for idx, result in enumerate(results):
+        if previous_score != result.total_score:
+            current_rank = idx + 1
+        result.rank = current_rank
+        result.save()
+        previous_score = result.total_score

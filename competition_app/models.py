@@ -39,7 +39,7 @@ class Criterion(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField()
     max_score = models.DecimalField(max_digits=5, decimal_places=2)
-    weight_percentage = models.DecimalField(max_digits=5, decimal_places=2)
+
 
 class Participant(models.Model):
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='participants')

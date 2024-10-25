@@ -17,7 +17,7 @@ class RoundAdmin(admin.ModelAdmin):
 
 @admin.register(Criterion)
 class CriterionAdmin(admin.ModelAdmin):
-    list_display = ('name', 'round', 'max_score', 'weight_percentage')
+    list_display = ('name', 'round', 'max_score',)
     list_filter = ('round',)
     search_fields = ('name', 'description')
 

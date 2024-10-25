@@ -1,212 +1,133 @@
+
 {% extends 'base.html' %}
 {% load scoring_filters %}
 
+{% block title %}Scoring Panel - {{ round.competition.name }} - {{ round.name }}{% endblock %}
+
 {% block content %}
-<div class="min-h-screen bg-gray-100 py-6">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+<div class="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header Section -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-8">
             <div class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">{{ round.competition.name }}</h1>
-                    <p class="text-sm text-gray-500">Round: {{ round.name }}</p>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ round.competition.name }}</h1>
+                    <p class="text-lg text-purple-600 font-semibold">{{ round.name }}</p>
                 </div>
                 <div class="text-right">
-                    <p class="text-sm font-medium text-gray-500">Judge</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ judge.user.get_full_name }}</p>
+                    <p class="text-sm text-gray-600">Judge: {{ judge.user.get_full_name }}</p>
+                    <p class="text-sm text-gray-500">{{ round.competition.start_date|date:"F d, Y" }}</p>
                 </div>
             </div>
         </div>
 
-        <!-- Scoring Table -->
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50">
-                                Participant
-                            </th>
-                            {% for criterion in criteria %}
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                <div>{{ criterion.name }}</div>
-                                <div class="text-xs text-gray-400 font-normal">Max: {{ criterion.max_score }}</div>
-                            </th>
-                            {% endfor %}
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for participant in participants %}
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap sticky left-0 bg-white">
-                                <div class="flex items-center">
-                                    {% if participant.profile_image %}
-                                    <img class="h-10 w-10 rounded-full object-cover" src="{{ participant.profile_image.url }}" alt="">
-                                    {% else %}
-                                    <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                        <span class="text-gray-500 font-medium">{{ participant.name|make_list|first }}</span>
-                                    </div>
-                                    {% endif %}
-                                    <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">#{{ participant.number }} {{ participant.name }}</div>
-                                        <div class="text-sm text-gray-500">{{ participant.email }}</div>
-                                    </div>
+        <!-- Scoring Section -->
+        <div class="space-y-6">
+            {% for participant in participants %}
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                <!-- Participant Header -->
+                <div class="bg-gradient-to-r from-purple-600 to-indigo-600 p-4">
+                    <div class="flex items-center space-x-4">
+                        {% if participant.profile_image %}
+                            <img src="{{ participant.profile_image.url }}" 
+                                 class="w-16 h-16 rounded-full border-2 border-white object-cover">
+                        {% endif %}
+                        <div class="text-white">
+                            <h3 class="text-xl font-bold">{{ participant.name }}</h3>
+                            <p class="text-purple-200">Participant #{{ participant.number }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scoring Form -->
+                <form method="POST" class="p-6" id="score-form-{{ participant.id }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="participant_id" value="{{ participant.id }}">
+                    
+                    <div class="space-y-6">
+                        {% for criterion in criteria %}
+                        <div class="scoring-criterion p-4 border rounded-xl hover:border-purple-300 transition-all duration-200">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h4 class="text-lg font-semibold text-gray-900">{{ criterion.name }}</h4>
+                                    <p class="text-sm text-gray-600">{{ criterion.description }}</p>
                                 </div>
-                            </td>
-                            
-                            {% for criterion in criteria %}
-                            <td class="px-6 py-4">
-                                <div class="space-y-2">
-                                    <input type="number" 
-                                    class="score-input block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                    step="0.01"
-                                    min="0"
-                                    max="{{ criterion.max_score }}"
-                                    data-participant="{{ participant.id }}"
-                                    data-criterion="{{ criterion.id }}"
-                                    value="{{ score_lookup|get_score:participant.id|add:','|add:criterion.id }}"
-                                    placeholder="Enter score">
+                                <div class="text-right">
+                                    <span class="text-sm text-gray-500">Max Score: {{ criterion.max_score }}</span>
                                 </div>
-                            </td>
-                            {% endfor %}
-                            
-                            <td class="px-6 py-4 whitespace-nowrap text-right">
-                                <button class="save-scores-btn inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                        data-participant="{{ participant.id }}">
-                                    Save Scores
-                                </button>
-                            </td>
-                        </tr>
+                            </div>
+
+                            <div class="flex items-center space-x-4">
+                                <input type="range" 
+                                       name="score_{{ participant.id }}_{{ criterion.id }}"
+                                       min="0" 
+                                       max="{{ criterion.max_score }}"
+                                       step="0.1"
+                                       value="{{ existing_scores|get_item:participant.id|get_item:criterion.id|default:0 }}"
+                                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                       oninput="updateScore(this)">
+                                <span class="score-display w-16 text-center font-semibold text-purple-600">0.0</span>
+                            </div>
+
+                            <textarea name="remarks_{{ participant.id }}_{{ criterion.id }}"
+                                      placeholder="Add remarks (optional)"
+                                      class="mt-3 w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-300 focus:border-purple-300"
+                                      rows="2"></textarea>
+                        </div>
                         {% endfor %}
-                    </tbody>
-                </table>
+                    </div>
+
+                    <div class="mt-6 flex justify-between items-center">
+                        <div class="text-lg font-semibold">
+                            Total Score: <span class="total-score text-purple-600">0.0</span>
+                        </div>
+                        <div class="space-x-4">
+                            <button type="button" 
+                                    class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                                    onclick="saveAsDraft({{ participant.id }})">
+                                Save as Draft
+                            </button>
+                            <button type="submit" 
+                                    class="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700">
+                                Submit Scores
+                            </button>
+                        </div>
+                    </div>
+                </form>
             </div>
+            {% endfor %}
         </div>
     </div>
 </div>
 
-<!-- Toast Notifications -->
-<div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-4"></div>
-
-{% endblock %}
-
-{% block extra_js %}
 <script>
+function updateScore(input) {
+    const scoreDisplay = input.parentElement.querySelector('.score-display');
+    scoreDisplay.textContent = parseFloat(input.value).toFixed(1);
+    updateTotalScore(input.closest('form'));
+}
+
+function updateTotalScore(form) {
+    const inputs = form.querySelectorAll('input[type="range"]');
+    let total = 0;
+    inputs.forEach(input => {
+        total += parseFloat(input.value);
+    });
+    form.querySelector('.total-score').textContent = total.toFixed(1);
+}
+
+function saveAsDraft(participantId) {
+    const form = document.getElementById(`score-form-${participantId}`);
+    const formData = new FormData(form);
+    formData.append('status', 'DRAFT');
+    // Add AJAX submission logic here
+}
+
+// Initialize all score displays and totals
 document.addEventListener('DOMContentLoaded', function() {
-    // Score input validation
-    document.querySelectorAll('.score-input').forEach(input => {
-        input.addEventListener('input', function() {
-            const max = parseFloat(this.max);
-            const value = parseFloat(this.value);
-            
-            if (value > max) {
-                this.value = max;
-                showToast(`Maximum score is ${max}`, 'warning');
-            }
-        });
+    document.querySelectorAll('input[type="range"]').forEach(input => {
+        updateScore(input);
     });
-
-    // Save scores for a participant
-    document.querySelectorAll('.save-scores-btn').forEach(button => {
-        button.addEventListener('click', async function() {
-            const participantId = this.dataset.participant;
-            const scoreInputs = document.querySelectorAll(`input[data-participant="${participantId}"]`);
-            let scores = [];
-            
-            scoreInputs.forEach(input => {
-                const criterionId = input.dataset.criterion;
-                const score = input.value;
-                const remarks = document.querySelector(`textarea[data-participant="${participantId}"][data-criterion="${criterionId}"]`).value;
-                
-                if (score) {
-                    scores.push({
-                        criterion_id: criterionId,
-                        score: score,
-                        remarks: remarks
-                    });
-                }
-            });
-
-            if (scores.length === 0) {
-                showToast('Please enter at least one score', 'warning');
-                return;
-            }
-
-            try {
-                const response = await fetch(window.location.href, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken'),
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify({
-                        participant_id: participantId,
-                        scores: scores
-                    })
-                });
-
-                if (response.ok) {
-                    showToast('Scores saved successfully!', 'success');
-                } else {
-                    showToast('Error saving scores', 'error');
-                }
-            } catch (error) {
-                showToast('Error saving scores', 'error');
-                console.error(error);
-            }
-        });
-    });
-
-    function showToast(message, type) {
-        const toast = document.createElement('div');
-        toast.className = `transform ease-out duration-300 transition-transform translate-y-2 opacity-0 
-                          sm:translate-y-0 sm:translate-x-2 bg-white rounded-lg shadow-lg 
-                          pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden`;
-        
-        const colors = {
-            success: 'text-green-500 bg-green-50',
-            warning: 'text-yellow-500 bg-yellow-50',
-            error: 'text-red-500 bg-red-50'
-        };
-
-        toast.innerHTML = `
-            <div class="p-4">
-                <div class="flex items-start">
-                    <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 ${colors[type]}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                  d="${type === 'success' ? 'M5 13l4 4L19 7' : 
-                                     type === 'warning' ? 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' : 
-                                     'M6 18L18 6M6 6l12 12'}"/>
-                        </svg>
-                    </div>
-                    <div class="ml-3 w-0 flex-1">
-                        <p class="text-sm font-medium text-gray-900">${message}</p>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.getElementById('toast-container').appendChild(toast);
-        requestAnimationFrame(() => {
-            toast.classList.remove('opacity-0', 'translate-y-2', 'sm:translate-x-2');
-        });
-        
-        setTimeout(() => {
-            toast.classList.add('opacity-0', 'translate-y-2', 'sm:translate-x-2');
-            setTimeout(() => toast.remove(), 300);
-        }, 5000);
-    }
-
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
-    }
 });
 </script>
 {% endblock %}
