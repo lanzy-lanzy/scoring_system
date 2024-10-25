@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet" />
     <script src="https://unpkg.com/heroicons@2.0.18/24/outline/index.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen overflow-hidden">
@@ -14,6 +16,7 @@
         <aside class="fixed inset-y-0 left-0 z-50 w-64 transition-transform -translate-x-full bg-gradient-to-b from-purple-800 to-indigo-900 sm:translate-x-0" aria-label="Sidebar">
             <div class="h-full px-3 py-4 overflow-y-auto">
                 <div class="flex items-center mb-5 pl-2.5">
+                    <i class="fas fa-trophy text-white mr-2"></i>
                     <span class="self-center text-xl font-semibold whitespace-nowrap text-white">Scoring System</span>
                 </div>
                 <ul class="space-y-2 font-medium">
@@ -21,59 +24,45 @@
                         {% if user.is_staff %}  <!-- Admin Navigation -->
                         <li>
                             <a href="{% url 'dashboard' %}" class="flex items-center p-2 text-white rounded-lg hover:bg-purple-700 group">
-                                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                                </svg>
+                                <i class="fas fa-home text-gray-300 w-5 h-5"></i>
                                 <span class="ml-3">Admin Dashboard</span>
                             </a>
                         </li>
                         <li>
                             <a href="{% url 'competition_list' %}" class="flex items-center p-2 text-white rounded-lg hover:bg-purple-700 group">
-                                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"></path>
-                                </svg>
+                                <i class="fas fa-medal text-gray-300 w-5 h-5"></i>
                                 <span class="ml-3">Manage Competitions</span>
                             </a>
                         </li>
                         <li>
                             <a href="{% url 'participant_list' %}" class="flex items-center p-2 text-white rounded-lg hover:bg-purple-700 group">
-                                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                                </svg>
+                                <i class="fas fa-users text-gray-300 w-5 h-5"></i>
                                 <span class="ml-3">Manage Participants</span>
                             </a>
                         </li>
 
                         <li>
                             <a href="{% url 'results_list' %}" class="flex items-center p-2 text-white rounded-lg hover:bg-purple-700 group">
-                                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                                </svg>
+                                <i class="fas fa-list-ol text-gray-300 w-5 h-5"></i>
                                 <span class="ml-3">Results</span>
                             </a>
                         </li>
                         {% elif user.is_judge %}  <!-- Judge Navigation -->
                         <li>
                             <a href="{% url 'judge_dashboard' %}" class="flex items-center p-2 text-white rounded-lg hover:bg-purple-700 group">
-                                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                                </svg>
+                                <i class="fas fa-gavel text-gray-300 w-5 h-5"></i>
                                 <span class="ml-3">Judge Dashboard</span>
                             </a>
                         </li>
                         <li>
                             <a href="#" class="flex items-center p-2 text-white rounded-lg hover:bg-purple-700 group">
-                                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                                </svg>
+                                <i class="fas fa-flag text-gray-300 w-5 h-5"></i>
                                 <span class="ml-3">Active Competitions</span>
                             </a>
                         </li>
                         <li>
                             <a href="#" class="flex items-center p-2 text-white rounded-lg hover:bg-purple-700 group">
-                                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"></path>
-                                </svg>
+                                <i class="fas fa-history text-gray-300 w-5 h-5"></i>
                                 <span class="ml-3">Scoring History</span>
                             </a>
                         </li>
@@ -90,9 +79,7 @@
                 <div class="flex flex-wrap justify-between items-center">
                     <div class="flex items-center justify-start">
                         <button data-drawer-target="drawer-navigation" data-drawer-toggle="drawer-navigation" aria-controls="drawer-navigation" class="p-2 mr-2 text-gray-600 rounded-lg sm:hidden hover:text-gray-900 hover:bg-gray-100 focus:outline-none">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                            </svg>
+                            <i class="fas fa-bars w-6 h-6"></i>
                         </button>
                     </div>
                     <div class="flex items-center">
@@ -112,19 +99,19 @@
                                             </div>
                                             <ul class="py-1" aria-labelledby="dropdown">
                                                 <li>
-                                                    <a href="{% url 'profile' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                                                    <a href="{% url 'profile' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-user mr-2"></i>Profile</a>
                                                 </li>
                                                 <li>
-                                                    <a href="{% url 'settings' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
+                                                    <a href="{% url 'settings' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-cog mr-2"></i>Settings</a>
                                                 </li>
                                                 <li>
-                                                    <a href="{% url 'logout' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                                                    <a href="{% url 'logout' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-sign-out-alt mr-2"></i>Logout</a>
                                                 </li>
                                             </ul>
                                             {% else %}
                                             <ul class="py-1">
                                                 <li>
-                                                    <a href="{% url 'login' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">Login</a>
+                                                    <a href="{% url 'login' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-sign-in-alt mr-2"></i>Login</a>
                                                 </li>
                                             </ul>
                                             {% endif %}

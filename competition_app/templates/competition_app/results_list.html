@@ -7,8 +7,8 @@
     <div class="max-w-7xl mx-auto px-4">
         <!-- Header Section -->
         <div class="mb-8">
-            <h1 class="text-4xl font-bold text-gray-900">Competition Results</h1>
-            <p class="mt-2 text-gray-600">View detailed scoring results and rankings</p>
+            <h1 class="text-4xl font-bold text-gray-900"><i class="fas fa-trophy mr-2"></i>Competition Results</h1>
+            <p class="mt-2 text-gray-600"><i class="fas fa-chart-bar mr-2"></i>View detailed scoring results and rankings</p>
         </div>
 
         <!-- Results Grid -->
@@ -17,25 +17,25 @@
             <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
                 <!-- Competition Header -->
                 <div class="bg-gradient-to-r from-purple-600 to-indigo-600 p-6">
-                    <h2 class="text-2xl font-bold text-white">{{ competition.name }}</h2>
-                    <p class="text-purple-200">{{ competition.start_date|date:"F d, Y" }}</p>
+                    <h2 class="text-2xl font-bold text-white"><i class="fas fa-medal mr-2"></i>{{ competition.name }}</h2>
+                    <p class="text-purple-200"><i class="far fa-calendar-alt mr-2"></i>{{ competition.start_date|date:"F d, Y" }}</p>
                 </div>
 
                 <!-- Rounds Results -->
                 {% for round in competition.rounds.all %}
                 <div class="border-b border-gray-100 p-6">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4">{{ round.name }}</h3>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4"><i class="fas fa-flag-checkered mr-2"></i>{{ round.name }}</h3>
                     
                     <!-- Results Table -->
                     <div class="overflow-x-auto">
                         <table class="min-w-full">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Participant</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Score</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><i class="fas fa-ranking-star mr-1"></i>Rank</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><i class="fas fa-user mr-1"></i>Participant</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><i class="fas fa-star mr-1"></i>Total Score</th>
                                     {% for criterion in round.criteria.all %}
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ criterion.name }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><i class="fas fa-clipboard-list mr-1"></i>{{ criterion.name }}</th>
                                     {% endfor %}
                                 </tr>
                             </thead>
@@ -54,16 +54,16 @@
                                             {% endif %}
                                             <div>
                                                 <div class="font-medium text-gray-900">{{ result.participant.name }}</div>
-                                                <div class="text-sm text-gray-500">Participant #{{ result.participant.number }}</div>
+                                                <div class="text-sm text-gray-500"><i class="fas fa-id-badge mr-1"></i>Participant #{{ result.participant.number }}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="px-6 py-4">
-                                        <span class="text-lg font-semibold text-gray-900">{{ result.total_score }}</span>
+                                        <span class="text-lg font-semibold text-gray-900"><i class="fas fa-calculator mr-1"></i>{{ result.total_score }}</span>
                                     </td>
                                     {% for score in result.participant.scores.all %}
                                     <td class="px-6 py-4">
-                                        <span class="text-gray-900">{{ score.score }}</span>
+                                        <span class="text-gray-900"><i class="fas fa-check-circle mr-1"></i>{{ score.score }}</span>
                                     </td>
                                     {% endfor %}
                                 </tr>
@@ -82,11 +82,11 @@
                                      class="w-20 h-20 rounded-full border-4 {% if forloop.counter == 1 %}border-yellow-400{% elif forloop.counter == 2 %}border-gray-400{% else %}border-yellow-700{% endif %}">
                                 {% endif %}
                                 <span class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold">
-                                    {{ forloop.counter }}
+                                    <i class="fas fa-crown"></i>
                                 </span>
                             </div>
-                            <p class="mt-2 font-medium text-gray-900">{{ result.participant.name }}</p>
-                            <p class="text-purple-600 font-bold">{{ result.total_score }}</p>
+                            <p class="mt-2 font-medium text-gray-900"><i class="fas fa-user mr-1"></i>{{ result.participant.name }}</p>
+                            <p class="text-purple-600 font-bold"><i class="fas fa-star mr-1"></i>{{ result.total_score }}</p>
                         </div>
                         {% endfor %}
                     </div>
