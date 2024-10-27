@@ -3,7 +3,7 @@
 {% block title %}Competitions{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 py-12">
+<div class="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 py-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header Section -->
         <div class="mb-8 flex justify-between items-center">
@@ -22,7 +22,7 @@
                 </p>
             </div>
             <a href="{% url 'create_competition' %}" 
-               class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 transform transition-all duration-200 hover:scale-105 shadow-lg">
+               class="px-6 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-xl hover:from-orange-600 hover:to-yellow-600 transform transition-all duration-200 hover:scale-105 shadow-lg">
                 <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
@@ -88,7 +88,7 @@
                             {{ competition.participants.count }} Participants
                         </div>
                         <a href="{% url 'competition_detail' competition.id %}" 
-                           class="text-purple-600 hover:text-purple-700 font-medium">
+                           class="text-orange-500 hover:text-yellow-500 font-medium">
                             View Details
                             <svg class="w-5 h-5 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
