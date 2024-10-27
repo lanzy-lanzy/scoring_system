@@ -257,15 +257,33 @@ def judge_dashboard(request):
     return render(request, 'competition_app/judge/dashboard.html', context)
 
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.contrib.auth.models import User
 
 @login_required
-def profile_view(request):
-    context = {
-        'user': request.user,
-        'page_title': 'Profile'
-    }
-    return render(request, 'competition_app/profile.html', context)
+def edit_profile(request):
+      if request.method == 'POST':
+          username = request.POST.get('username')
+          email = request.POST.get('email')
+          profile_image = request.FILES.get('profile_image')
 
+          user = request.user
+          user.username = username
+          user.email = email
+
+          if profile_image:
+              # Assuming you have a profile model with an image field
+              if hasattr(user, 'judge'):
+                  user.judge.profile_image = profile_image
+                  user.judge.save()
+
+          user.save()
+          messages.success(request, 'Profile updated successfully.')
+          return redirect('judge_dashboard')
+
+      return render(request, 'competition_app/profile.html')
 @login_required
 def settings_view(request):
     context = {
@@ -560,3 +578,6 @@ def toggle_results_visibility(request, competition_id):
         
         return JsonResponse({'status': 'success'})
     return JsonResponse({'status': 'error'}, status=403)
+
+def landing_page(request):
+    return render(request, 'landing_page.html')

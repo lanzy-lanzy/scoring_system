@@ -10,9 +10,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
 </head>
+
 <body class="bg-gray-50">
+ 
     <div class="flex h-screen overflow-hidden">
         <!-- Sidebar -->
+     
         <aside class="fixed inset-y-0 left-0 z-50 w-64 transition-transform -translate-x-full bg-gradient-to-b from-[#FABC3F] via-[#E85C0D] to-[#C7253E] sm:translate-x-0" aria-label="Sidebar">
             <div class="h-full px-3 py-4 overflow-y-auto">
                 <div class="flex items-center mb-5 pl-2.5">
@@ -71,7 +74,7 @@
                 </ul>
             </div>
         </aside>
-
+ 
         <!-- Main Content -->
         <div class="flex-1 sm:ml-64">
             <!-- Top Navigation -->
@@ -88,7 +91,19 @@
                                 <div class="flex items-center ml-3">
                                     <div class="relative">
                                         <button type="button" class="flex text-sm bg-[#C7253E] rounded-full focus:ring-4 focus:ring-[#E85C0D]" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="dropdown">
-                                            <img class="w-8 h-8 rounded-full" src="https://ui-avatars.com/api/?name=Admin+User" alt="user photo">
+                                            {% if user.is_authenticated %}
+                                                {% if user.is_judge %}
+                                                    {% if user.judge.profile_image %}
+                                                        <img class="w-8 h-8 rounded-full" src="{{ user.judge.profile_image.url }}" alt="user photo">
+                                                    {% else %}
+                                                        <img class="w-8 h-8 rounded-full" src="{{ user.judge.get_profile_image_url }}" alt="user photo">
+                                                    {% endif %}
+                                                {% else %}
+                                                    <img class="w-8 h-8 rounded-full" src="https://ui-avatars.com/api/?name={{ user.username|urlencode }}" alt="user photo">
+                                                {% endif %}
+                                            {% else %}
+                                                <img class="w-8 h-8 rounded-full" src="https://ui-avatars.com/api/?name=Guest" alt="user photo">
+                                            {% endif %}
                                         </button>
                                         <!-- Dropdown menu -->
                                         <div class="hidden z-50 my-4 w-56 text-base list-none bg-white rounded divide-y divide-gray-100 shadow" id="dropdown">
@@ -99,7 +114,7 @@
                                             </div>
                                             <ul class="py-1" aria-labelledby="dropdown">
                                                 <li>
-                                                    <a href="{% url 'profile' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-[#FABC3F]"><i class="fas fa-user mr-2"></i>Profile</a>
+                                                    <a href="{% url 'edit_profile' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-[#FABC3F]"><i class="fas fa-user mr-2"></i>Profile</a>
                                                 </li>
                                                 <li>
                                                     <a href="{% url 'settings' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-[#FABC3F]"><i class="fas fa-cog mr-2"></i>Settings</a>
@@ -117,19 +132,20 @@
                                             {% endif %}
                                         </div>
                                     </div>
-                                </div>
-                            </div>
+                                </div>                                                        </div>
                         </div>
                     </div>
                 </nav>
+         
             <!-- Main Content Area -->
             <main class="p-4 pt-20 h-screen overflow-auto">
                 {% block content %}
                 {% endblock %}
             </main>
         </div>
+      
     </div>
-
+ 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.js"></script>
 </body>
 </html>
