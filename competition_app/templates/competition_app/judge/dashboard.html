@@ -2,10 +2,18 @@
   {% load static %}
 
   {% block content %}
-  <div class="min-h-screen bg-gray-100">
+  <div class="min-h-screen bg-gray-100 py-8">
+      <!-- Welcome Message -->
+      <div class="px-6 mb-8">
+          <div class="bg-gradient-to-r from-orange-500 to-yellow-500 rounded-xl shadow-lg p-6 text-white">
+              <h1 class="text-3xl font-bold mb-2">Welcome, {{ request.user.first_name|default:request.user.username }}! 👋</h1>
+              <p class="text-lg opacity-90">Ready to evaluate today's performances? Here's your judging overview.</p>
+          </div>
+      </div>
+
       <!-- Stats Overview -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 p-6 bg-gradient-to-br from-orange-50 to-yellow-50">
-          <div class="bg-white rounded-xl shadow-md overflow-hidden">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 px-6">
+          <div class="bg-white rounded-xl shadow-lg overflow-hidden transform transition-transform hover:scale-105">
               <div class="p-6">
                   <div class="flex items-center">
                       <div class="p-3 rounded-full bg-orange-500 bg-opacity-10">
@@ -21,7 +29,7 @@
               </div>
           </div>
 
-          <div class="bg-white rounded-xl shadow-md overflow-hidden">
+          <div class="bg-white rounded-xl shadow-lg overflow-hidden transform transition-transform hover:scale-105">
               <div class="p-6">
                   <div class="flex items-center">
                       <div class="p-3 rounded-full bg-yellow-500 bg-opacity-10">
@@ -37,7 +45,7 @@
               </div>
           </div>
 
-          <div class="bg-white rounded-xl shadow-md overflow-hidden">
+          <div class="bg-white rounded-xl shadow-lg overflow-hidden transform transition-transform hover:scale-105">
               <div class="p-6">
                   <div class="flex items-center">
                       <div class="p-3 rounded-full bg-yellow-500 bg-opacity-10">
@@ -56,14 +64,14 @@
 
       <!-- Competition List -->
       <div class="px-6">
-          <div class="bg-white rounded-xl shadow-md overflow-hidden">
-              <div class="px-6 py-4 border-b border-gray-200">
+          <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+              <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-yellow-50">
                   <h3 class="text-lg font-semibold text-gray-900">Active Competitions</h3>
               </div>
-            
+
               <div class="divide-y divide-gray-200">
                   {% for data in competition_data %}
-                  <div class="p-6">
+                  <div class="p-6 hover:bg-gray-50 transition-colors">
                       <div class="flex items-center justify-between mb-4">
                           <div>
                               <h4 class="text-xl font-semibold text-gray-900">{{ data.competition.name }}</h4>
@@ -73,7 +81,7 @@
                               {{ data.participant_count }} Participants
                           </span>
                       </div>
-                    
+
                       <!-- Rounds Grid -->
                       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                           {% for round in data.rounds %}
