@@ -13,7 +13,7 @@
 <body class="bg-gray-50">
     <div class="flex h-screen overflow-hidden">
         <!-- Sidebar -->
-        <aside class="fixed inset-y-0 left-0 z-50 w-64 transition-transform -translate-x-full bg-gradient-to-b from-purple-800 to-indigo-900 sm:translate-x-0" aria-label="Sidebar">
+        <aside class="fixed inset-y-0 left-0 z-50 w-64 transition-transform -translate-x-full bg-gradient-to-b from-[#FABC3F] via-[#E85C0D] to-[#C7253E] sm:translate-x-0" aria-label="Sidebar">
             <div class="h-full px-3 py-4 overflow-y-auto">
                 <div class="flex items-center mb-5 pl-2.5">
                     <i class="fas fa-trophy text-white mr-2"></i>
@@ -23,45 +23,45 @@
                     {% if user.is_authenticated %}
                         {% if user.is_staff %}  <!-- Admin Navigation -->
                         <li>
-                            <a href="{% url 'dashboard' %}" class="flex items-center p-2 text-white rounded-lg hover:bg-purple-700 group">
+                            <a href="{% url 'dashboard' %}" class="flex items-center p-2 text-white rounded-lg hover:bg-[#821131] group">
                                 <i class="fas fa-home text-gray-300 w-5 h-5"></i>
                                 <span class="ml-3">Admin Dashboard</span>
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'competition_list' %}" class="flex items-center p-2 text-white rounded-lg hover:bg-purple-700 group">
+                            <a href="{% url 'competition_list' %}" class="flex items-center p-2 text-white rounded-lg hover:bg-[#821131] group">
                                 <i class="fas fa-medal text-gray-300 w-5 h-5"></i>
                                 <span class="ml-3">Manage Competitions</span>
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'participant_list' %}" class="flex items-center p-2 text-white rounded-lg hover:bg-purple-700 group">
+                            <a href="{% url 'participant_list' %}" class="flex items-center p-2 text-white rounded-lg hover:bg-[#821131] group">
                                 <i class="fas fa-users text-gray-300 w-5 h-5"></i>
                                 <span class="ml-3">Manage Participants</span>
                             </a>
                         </li>
 
                         <li>
-                            <a href="{% url 'results_list' %}" class="flex items-center p-2 text-white rounded-lg hover:bg-purple-700 group">
+                            <a href="{% url 'results_list' %}" class="flex items-center p-2 text-white rounded-lg hover:bg-[#821131] group">
                                 <i class="fas fa-list-ol text-gray-300 w-5 h-5"></i>
                                 <span class="ml-3">Results</span>
                             </a>
                         </li>
                         {% elif user.is_judge %}  <!-- Judge Navigation -->
                         <li>
-                            <a href="{% url 'judge_dashboard' %}" class="flex items-center p-2 text-white rounded-lg hover:bg-purple-700 group">
+                            <a href="{% url 'judge_dashboard' %}" class="flex items-center p-2 text-white rounded-lg hover:bg-[#821131] group">
                                 <i class="fas fa-gavel text-gray-300 w-5 h-5"></i>
                                 <span class="ml-3">Judge Dashboard</span>
                             </a>
                         </li>
                         <li>
-                            <a href="#" class="flex items-center p-2 text-white rounded-lg hover:bg-purple-700 group">
+                            <a href="#" class="flex items-center p-2 text-white rounded-lg hover:bg-[#821131] group">
                                 <i class="fas fa-flag text-gray-300 w-5 h-5"></i>
                                 <span class="ml-3">Active Competitions</span>
                             </a>
                         </li>
                         <li>
-                            <a href="#" class="flex items-center p-2 text-white rounded-lg hover:bg-purple-700 group">
+                            <a href="#" class="flex items-center p-2 text-white rounded-lg hover:bg-[#821131] group">
                                 <i class="fas fa-history text-gray-300 w-5 h-5"></i>
                                 <span class="ml-3">Scoring History</span>
                             </a>
@@ -87,7 +87,7 @@
                             <div>
                                 <div class="flex items-center ml-3">
                                     <div class="relative">
-                                        <button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="dropdown">
+                                        <button type="button" class="flex text-sm bg-[#C7253E] rounded-full focus:ring-4 focus:ring-[#E85C0D]" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="dropdown">
                                             <img class="w-8 h-8 rounded-full" src="https://ui-avatars.com/api/?name=Admin+User" alt="user photo">
                                         </button>
                                         <!-- Dropdown menu -->
@@ -99,19 +99,19 @@
                                             </div>
                                             <ul class="py-1" aria-labelledby="dropdown">
                                                 <li>
-                                                    <a href="{% url 'profile' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-user mr-2"></i>Profile</a>
+                                                    <a href="{% url 'profile' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-[#FABC3F]"><i class="fas fa-user mr-2"></i>Profile</a>
                                                 </li>
                                                 <li>
-                                                    <a href="{% url 'settings' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-cog mr-2"></i>Settings</a>
+                                                    <a href="{% url 'settings' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-[#FABC3F]"><i class="fas fa-cog mr-2"></i>Settings</a>
                                                 </li>
                                                 <li>
-                                                    <a href="{% url 'logout' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-sign-out-alt mr-2"></i>Logout</a>
+                                                    <a href="{% url 'logout' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-[#FABC3F]"><i class="fas fa-sign-out-alt mr-2"></i>Logout</a>
                                                 </li>
                                             </ul>
                                             {% else %}
                                             <ul class="py-1">
                                                 <li>
-                                                    <a href="{% url 'login' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-sign-in-alt mr-2"></i>Login</a>
+                                                    <a href="{% url 'login' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-[#FABC3F]"><i class="fas fa-sign-in-alt mr-2"></i>Login</a>
                                                 </li>
                                             </ul>
                                             {% endif %}

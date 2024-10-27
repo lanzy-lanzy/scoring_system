@@ -34,6 +34,15 @@
                 <span class="text-gray-600 font-medium">Scoring Unavailable</span>
                 {% endif %}
             </div>
+            
+            {% if round.all_scores_submitted and user.is_superuser %}
+            <div class="mt-4 text-center">
+                <a href="{% url 'results_reveal' round.competition.id %}" 
+                   class="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-indigo-700 transform hover:scale-105 transition-all">
+                    Reveal Round Results 🏆
+                </a>
+            </div>
+            {% endif %}
         </div>
 
         {% if round.status == 'ONGOING' %}

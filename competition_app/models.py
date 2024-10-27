@@ -15,7 +15,7 @@ class Competition(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='competitions_created')
-
+    show_results = models.BooleanField(default=False)
     def __str__(self):
         return self.name
 
@@ -33,6 +33,10 @@ class Round(models.Model):
 
     class Meta:
         ordering = ['order']
+
+        
+    def __str__(self):
+        return self.name
 
 class Criterion(models.Model):
     round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name='criteria')
@@ -80,6 +84,14 @@ class Participant(models.Model):
 class Judge(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(max_length=20)
+    profile_image = models.ImageField(
+        upload_to='judge_profiles/', 
+        default='defaults/people.svg',
+        null=True, 
+        blank=True
+    )
+    expertise = models.CharField(max_length=200, blank=True)
+    bio = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=[
         ('ACTIVE', 'Active'),
         ('INACTIVE', 'Inactive')
@@ -88,8 +100,12 @@ class Judge(models.Model):
 
     def __str__(self):
         return f"{self.user.get_full_name()}"
-# Add this property to User model
-User.is_judge = property(lambda u: hasattr(u, 'judge'))
+
+    def get_profile_image_url(self):
+        if self.profile_image:
+            return self.profile_image.url
+        return 'defaults/people.svg'
+    User.is_judge = property(lambda u: hasattr(u, 'judge'))
 
 class Score(models.Model):
     participant = models.ForeignKey(Participant, on_delete=models.CASCADE, related_name='scores')
@@ -117,3 +133,16 @@ class CompetitionResult(models.Model):
 
     class Meta:
         unique_together = ['competition', 'participant', 'round']
+
+class JudgeAssignment(models.Model):
+    judge = models.ForeignKey(Judge, on_delete=models.CASCADE, related_name='assignments')
+    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='judge_assignments')
+    rounds = models.ManyToManyField(Round, related_name='judge_assignments')
+    assigned_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=[
+        ('ACTIVE', 'Active'),
+        ('INACTIVE', 'Inactive')
+    ], default='ACTIVE')
+
+    class Meta:
+        unique_together = ['judge', 'competition']

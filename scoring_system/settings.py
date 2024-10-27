@@ -49,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'competition_app.middleware.ResultsVisibilityMiddleware',
 ]
 
 ROOT_URLCONF = 'scoring_system.urls'

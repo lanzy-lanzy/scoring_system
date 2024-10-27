@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Competition, Participant, Judge, CompetitionResult
+from .models import Competition, Participant, Judge, CompetitionResult, JudgeAssignment
 from django.contrib.auth.models import User
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -229,28 +229,30 @@ from .models import Judge, Competition, Round, Participant, Score, Criterion
 def judge_dashboard(request):
     judge = get_object_or_404(Judge, user=request.user)
     
-    # Get all active competitions with their rounds
-    competitions = Competition.objects.filter(status='ACTIVE').prefetch_related('rounds')
+    # Get only assigned active competitions
+    assigned_competitions = Competition.objects.filter(
+        status='ACTIVE',
+        judge_assignments__judge=judge,
+        judge_assignments__status='ACTIVE'
+    ).prefetch_related('rounds')
     
-    # Get scoring statistics
-    pending_scores = Score.objects.filter(judge=judge, status='DRAFT').count()
-    submitted_scores = Score.objects.filter(judge=judge, status='SUBMITTED').count()
-    
-    # Prepare competition data with rounds
     competition_data = []
-    for competition in competitions:
-        rounds = competition.rounds.all().order_by('order')
+    for competition in assigned_competitions:
+        assigned_rounds = competition.rounds.filter(
+            judge_assignments__judge=judge
+        ).order_by('order')
+        
         competition_data.append({
             'competition': competition,
-            'rounds': rounds,
+            'rounds': assigned_rounds,
             'participant_count': competition.participants.count(),
         })
     
     context = {
         'judge': judge,
         'competition_data': competition_data,
-        'pending_scores': pending_scores,
-        'submitted_scores': submitted_scores,
+        'pending_scores': Score.objects.filter(judge=judge, status='DRAFT').count(),
+        'submitted_scores': Score.objects.filter(judge=judge, status='SUBMITTED').count(),
     }
     return render(request, 'competition_app/judge/dashboard.html', context)
 
@@ -283,6 +285,18 @@ import json
 def scoring_panel(request, round_id):
     round_obj = get_object_or_404(Round, id=round_id)
     judge = get_object_or_404(Judge, user=request.user)
+    
+    # Check if judge is assigned to this competition and round
+    assignment = JudgeAssignment.objects.filter(
+        judge=judge,
+        competition=round_obj.competition,
+        rounds=round_obj,
+        status='ACTIVE'
+    ).exists()
+    
+    if not assignment:
+        messages.error(request, 'You are not assigned to judge this round.')
+        return redirect('judge_dashboard')
     
     # Check if round status is ongoing
     if round_obj.status != 'ONGOING':
@@ -418,31 +432,39 @@ def results_list(request):
         'rounds__criteria',
         'rounds__results',
         'rounds__results__participant',
-        'participants'
+        'participants',
+        'judge_assignments__judge'
     ).filter(status__in=['ACTIVE', 'COMPLETED']).order_by('-created_at')
 
     for competition in competitions:
+        competition.total_participants = competition.participants.count()
+        competition.total_judges = competition.judge_assignments.filter(status='ACTIVE').count()
+        
         for round in competition.rounds.all():
-            # Get results ordered by rank
             round.ordered_results = round.results.all().order_by('rank')
-            
-            # Calculate statistics
             scores = [result.total_score for result in round.ordered_results]
+            
             if scores:
                 round.stats = {
                     'highest_score': max(scores),
                     'average_score': sum(scores) / len(scores),
-                    'lowest_score': min(scores)
+                    'lowest_score': min(scores),
+                    'total_participants': len(scores)
                 }
-            
-            # Get top 3 participants
-            round.top_three = round.ordered_results[:3]
+                
+                # Get top performers with more details
+                round.top_performers = round.ordered_results[:3]
+                for result in round.top_performers:
+                    result.participant.total_criteria_score = sum(
+                        score.score for score in result.participant.scores.filter(criterion__round=round)
+                    )
 
     context = {
         'competitions': competitions,
         'total_competitions': competitions.count(),
         'total_participants': Participant.objects.count(),
         'total_judges': Judge.objects.count(),
+        'page_title': 'Competition Results'
     }
     
     return render(request, 'competition_app/results_list.html', context)
@@ -492,3 +514,49 @@ def calculate_rankings(round_obj):
         result.rank = current_rank
         result.save()
         previous_score = result.total_score
+
+@login_required
+def results_reveal(request, competition_id):
+    competition = get_object_or_404(Competition.objects.prefetch_related(
+        'rounds',
+        'participants',
+        'judge_assignments__judge__user',  # Add user to prefetch
+        'results'
+    ), id=competition_id)
+
+    # Get final results ordered by rank
+    results = CompetitionResult.objects.filter(
+        competition=competition,
+        round=competition.rounds.last()
+    ).select_related('participant').order_by('rank')
+
+    # Get judges with their profiles
+    judges = Judge.objects.filter(
+        assignments__competition=competition,
+        assignments__status='ACTIVE'
+    ).select_related('user').distinct()
+
+    context = {
+        'competition': competition,
+        'results': results,
+        'first_place': results.filter(rank=1).first(),
+        'second_place': results.filter(rank=2).first(),
+        'third_place': results.filter(rank=3).first(),
+        'judges': judges,
+        'total_participants': results.count(),
+        'total_judges': judges.count(),
+    }
+    
+    return render(request, 'competition_app/results_reveal.html', context)
+
+@login_required
+def toggle_results_visibility(request, competition_id):
+    if request.method == 'POST' and request.user.is_superuser:
+        competition = get_object_or_404(Competition, id=competition_id)
+        show_results = request.POST.get('show_results') == 'true'
+        
+        competition.show_results = show_results
+        competition.save()
+        
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'}, status=403)

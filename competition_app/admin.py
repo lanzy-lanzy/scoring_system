@@ -48,3 +48,13 @@ class CompetitionResultAdmin(admin.ModelAdmin):
     list_filter = ('competition', 'round')
     search_fields = ('participant__name',)
     date_hierarchy = 'timestamp'
+
+from django.contrib import admin
+from .models import JudgeAssignment
+
+@admin.register(JudgeAssignment)
+class JudgeAssignmentAdmin(admin.ModelAdmin):
+    list_display = ['judge', 'competition', 'status', 'assigned_at']
+    list_filter = ['status', 'competition', 'judge']
+    search_fields = ['judge__user__username', 'competition__name']
+    filter_horizontal = ['rounds']
