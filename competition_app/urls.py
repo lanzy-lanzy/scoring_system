@@ -17,6 +17,7 @@ urlpatterns = [
       path('competitions/create/', views.create_competition, name='create_competition'),
       path('competitions/', views.competition_list, name='competition_list'),
       path('competitions/<int:competition_id>/', views.competition_detail, name='competition_detail'),
+      path('competitions/<int:competition_id>/edit/', views.edit_competition, name='edit_competition'),
       path('participants/create/', views.create_participant, name='create_participant'),
 
 

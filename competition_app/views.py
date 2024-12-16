@@ -100,51 +100,58 @@ from django.contrib.auth.decorators import login_required
 @login_required
 def create_competition(request):
     if request.method == 'POST':
-        with transaction.atomic():
-            competition = Competition.objects.create(
-                name=request.POST.get('name'),
-                description=request.POST.get('description'),
-                start_date=request.POST.get('start_date'),
-                end_date=request.POST.get('end_date'),
-                status=request.POST.get('status'),
-                created_by=request.user
-            )
-
-            # Handle rounds and criteria creation
-            round_names = request.POST.getlist('round_names[]')
-            round_orders = request.POST.getlist('round_orders[]')
-            round_weights = request.POST.getlist('round_weights[]')
-            round_statuses = request.POST.getlist('round_statuses[]')
-            
-            criterion_names = request.POST.getlist('criterion_names[]')
-            criterion_descriptions = request.POST.getlist('criterion_descriptions[]')
-            criterion_max_scores = request.POST.getlist('criterion_max_scores[]')
-
-            criteria_per_round = len(criterion_names) // len(round_names)
-
-            for i in range(len(round_names)):
-                round_obj = Round.objects.create(
-                    competition=competition,
-                    name=round_names[i],
-                    order=round_orders[i],
-                    weight_percentage=round_weights[i],
-                    status=round_statuses[i]
+        try:
+            with transaction.atomic():
+                # Create the competition
+                competition = Competition.objects.create(
+                    name=request.POST.get('name'),
+                    description=request.POST.get('description'),
+                    start_date=request.POST.get('start_date'),
+                    end_date=request.POST.get('end_date'),
+                    status=request.POST.get('status'),
+                    created_by=request.user
                 )
 
-                # Create criteria for this round
-                start_idx = i * criteria_per_round
-                end_idx = start_idx + criteria_per_round
-                
-                for j in range(start_idx, end_idx):
-                    Criterion.objects.create(
-                        round=round_obj,
-                        name=criterion_names[j],
-                        description=criterion_descriptions[j],
-                        max_score=criterion_max_scores[j]
-                    )
+                # Get round data from form
+                round_names = request.POST.getlist('round_names[]')
+                round_orders = request.POST.getlist('round_orders[]')
+                round_weights = request.POST.getlist('round_weights[]')
+                round_statuses = request.POST.getlist('round_statuses[]')
 
-        messages.success(request, 'Competition created successfully with rounds and criteria!')
-        return redirect('competition_list')
+                # Create each round
+                for i in range(len(round_names)):
+                    if round_names[i].strip():  # Only create if name is not empty
+                        round_obj = Round.objects.create(
+                            competition=competition,
+                            name=round_names[i],
+                            order=int(round_orders[i]) if round_orders[i] else i + 1,
+                            weight_percentage=float(round_weights[i]) if round_weights[i] else 100,
+                            status=round_statuses[i] if round_statuses[i] else 'PENDING'
+                        )
+
+                        # Get criteria for this specific round
+                        prefix = f'criterion_names_{i+1}[]'
+                        criterion_names = request.POST.getlist(prefix)
+                        desc_prefix = f'criterion_descriptions_{i+1}[]'
+                        criterion_descriptions = request.POST.getlist(desc_prefix)
+                        score_prefix = f'criterion_max_scores_{i+1}[]'
+                        criterion_max_scores = request.POST.getlist(score_prefix)
+
+                        # Create criteria for this round
+                        for j in range(len(criterion_names)):
+                            if criterion_names[j].strip():  # Only create if name is not empty
+                                Criterion.objects.create(
+                                    round=round_obj,
+                                    name=criterion_names[j],
+                                    description=criterion_descriptions[j] if j < len(criterion_descriptions) else '',
+                                    max_score=float(criterion_max_scores[j]) if j < len(criterion_max_scores) and criterion_max_scores[j] else 100
+                                )
+
+            messages.success(request, 'Competition created successfully!')
+            return redirect('competition_list')
+        except Exception as e:
+            messages.error(request, f'Error creating competition: {str(e)}')
+            return render(request, 'competition_app/create_competition.html')
 
     return render(request, 'competition_app/create_competition.html')
 
@@ -284,6 +291,7 @@ def edit_profile(request):
           return redirect('judge_dashboard')
 
       return render(request, 'competition_app/profile.html')
+
 @login_required
 def settings_view(request):
     context = {
@@ -581,3 +589,28 @@ def toggle_results_visibility(request, competition_id):
 
 def landing_page(request):
     return render(request, 'landing_page.html')
+
+@login_required
+def edit_competition(request, competition_id):
+    competition = get_object_or_404(Competition, id=competition_id)
+    
+    if request.method == 'POST':
+        # Get form data
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        status = request.POST.get('status')
+        
+        # Update competition
+        competition.title = title
+        competition.description = description
+        competition.start_date = start_date
+        competition.end_date = end_date
+        competition.status = status
+        competition.save()
+        
+        messages.success(request, 'Competition updated successfully!')
+        return redirect('competition_detail', competition_id=competition.id)
+    
+    return render(request, 'competition_app/edit_competition.html', {'competition': competition})
