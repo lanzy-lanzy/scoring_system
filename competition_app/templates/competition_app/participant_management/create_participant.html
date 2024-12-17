@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Create New Participant{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 py-12">
+    <div class="max-w-4xl mx-auto px-4">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Create New Participant</h1>
+                    <p class="mt-2 text-lg text-gray-600">Add a new participant to the system</p>
+                </div>
+                <a href="{% url 'participant_management' %}" 
+                   class="text-emerald-600 hover:text-emerald-900">
+                    &larr; Back to Participant Management
+                </a>
+            </div>
+        </div>
+
+        <!-- Create Form -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <form method="POST" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                {% if next_url %}
+                <input type="hidden" name="next" value="{{ next_url }}">
+                {% endif %}
+
+                <!-- Basic Information -->
+                <div class="space-y-6">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700">Full Name *</label>
+                        <input type="text" name="name" id="name" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700">Email *</label>
+                            <input type="email" name="email" id="email" required
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number *</label>
+                            <input type="tel" name="phone" id="phone" required
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="age" class="block text-sm font-medium text-gray-700">Age</label>
+                        <input type="number" name="age" id="age"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <!-- Additional Information -->
+                <div class="space-y-6">
+                    <div>
+                        <label for="bio" class="block text-sm font-medium text-gray-700">Bio</label>
+                        <textarea name="bio" id="bio" rows="3"
+                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"></textarea>
+                        <p class="mt-2 text-sm text-gray-500">Brief description about the participant.</p>
+                    </div>
+
+                    <div>
+                        <label for="achievements" class="block text-sm font-medium text-gray-700">Achievements</label>
+                        <textarea name="achievements" id="achievements" rows="3"
+                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"></textarea>
+                        <p class="mt-2 text-sm text-gray-500">List any notable achievements or awards.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Profile Image</label>
+                        <div class="mt-1 flex items-center">
+                            <input type="file" name="profile_image" accept="image/*"
+                                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex justify-end">
+                    <button type="submit"
+                            class="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors">
+                        Create Participant
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

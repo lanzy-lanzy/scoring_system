@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Assign Participants - {{ competition.name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 py-12">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Assign Participants</h1>
+                    <p class="mt-2 text-lg text-gray-600">{{ competition.name }}</p>
+                </div>
+                <a href="{% url 'manage_participants' competition.id %}" 
+                   class="text-emerald-600 hover:text-emerald-900">
+                    &larr; Back to Participant Management
+                </a>
+            </div>
+        </div>
+
+        <!-- Assignment Form -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <form method="POST" class="space-y-8">
+                {% csrf_token %}
+                
+                <!-- Participant Selection -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Select Participants</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {% for participant in available_participants %}
+                        <label class="relative flex items-start p-4 rounded-lg border hover:border-emerald-500 cursor-pointer">
+                            <div class="flex items-center h-5">
+                                <input type="checkbox" 
+                                       name="participants" 
+                                       value="{{ participant.id }}"
+                                       class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                            </div>
+                            <div class="ml-3">
+                                <div class="flex items-center">
+                                    {% if participant.profile_image %}
+                                    <img src="{{ participant.profile_image.url }}" 
+                                         class="w-8 h-8 rounded-full mr-2">
+                                    {% else %}
+                                    <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center mr-2">
+                                        <i class="fas fa-user text-emerald-600"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <p class="font-medium text-gray-900">{{ participant.name }}</p>
+                                        <p class="text-sm text-gray-500">{{ participant.category }}</p>
+                                    </div>
+                                </div>
+                                {% if participant.description %}
+                                <p class="mt-1 text-sm text-gray-500">{{ participant.description }}</p>
+                                {% endif %}
+                            </div>
+                        </label>
+                        {% empty %}
+                        <div class="col-span-full text-center py-12">
+                            <i class="fas fa-users text-4xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-600">No available participants found.</p>
+                            <p class="text-sm text-gray-500 mt-2">
+                                <a href="{% url 'create_participant' %}" class="text-emerald-600 hover:text-emerald-900">
+                                    Create new participants
+                                </a>
+                                to assign to this competition.
+                            </p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex justify-end">
+                    <button type="submit"
+                            class="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors">
+                        Assign Selected Participants
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

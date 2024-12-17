@@ -46,8 +46,7 @@ class Criterion(models.Model):
 
 
 class Participant(models.Model):
-    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='participants')
-    number = models.PositiveIntegerField()
+    competitions = models.ManyToManyField(Competition, related_name='participants', through='ParticipantCompetition')
     name = models.CharField(max_length=200)
     profile_image = models.ImageField(upload_to='participant_profiles/', null=True, blank=True)
     email = models.EmailField(unique=True)
@@ -63,24 +62,22 @@ class Participant(models.Model):
     ], default='ACTIVE')
     performance_metrics = models.TextField(blank=True)
 
+    def __str__(self):
+        return self.name
+
+class ParticipantCompetition(models.Model):
+    participant = models.ForeignKey(Participant, on_delete=models.CASCADE)
+    competition = models.ForeignKey(Competition, on_delete=models.CASCADE)
+    number = models.PositiveIntegerField()
+    registration_date = models.DateTimeField(auto_now_add=True)
+
     class Meta:
         unique_together = ['competition', 'number']
         ordering = ['number']
 
     def __str__(self):
-        return f"{self.name} - Participant #{self.number}"
+        return f"{self.participant.name} - {self.competition.name} #{self.number}"
 
-    def get_total_score(self, round_id=None):
-        scores = self.scores.all()
-        if round_id:
-            scores = scores.filter(criterion__round_id=round_id)
-        return sum(score.score for score in scores)
-
-    def get_rank(self, round_id=None):
-        competition_results = self.results.all()
-        if round_id:
-            competition_results = competition_results.filter(round_id=round_id)
-        return competition_results.first().rank if competition_results.exists() else None
 class Judge(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(max_length=20)

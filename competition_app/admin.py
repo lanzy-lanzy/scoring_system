@@ -1,5 +1,8 @@
 from django.contrib import admin
-from .models import Competition, Round, Criterion, Participant, Judge, Score, CompetitionResult
+from .models import (
+    Competition, Round, Criterion, Participant, Judge, Score, 
+    CompetitionResult, JudgeAssignment, ParticipantCompetition
+)
 
 @admin.register(Competition)
 class CompetitionAdmin(admin.ModelAdmin):
@@ -23,9 +26,16 @@ class CriterionAdmin(admin.ModelAdmin):
 
 @admin.register(Participant)
 class ParticipantAdmin(admin.ModelAdmin):
-    list_display = ('number', 'name', 'competition', 'status', 'registration_date')
-    list_filter = ('status', 'competition')
+    list_display = ('name', 'email', 'phone', 'status', 'registration_date')
+    list_filter = ('status',)
     search_fields = ('name', 'email', 'phone')
+    date_hierarchy = 'registration_date'
+
+@admin.register(ParticipantCompetition)
+class ParticipantCompetitionAdmin(admin.ModelAdmin):
+    list_display = ('participant', 'competition', 'number', 'registration_date')
+    list_filter = ('competition', 'registration_date')
+    search_fields = ('participant__name', 'competition__name')
     date_hierarchy = 'registration_date'
 
 @admin.register(Judge)
@@ -49,12 +59,9 @@ class CompetitionResultAdmin(admin.ModelAdmin):
     search_fields = ('participant__name',)
     date_hierarchy = 'timestamp'
 
-from django.contrib import admin
-from .models import JudgeAssignment
-
 @admin.register(JudgeAssignment)
 class JudgeAssignmentAdmin(admin.ModelAdmin):
-    list_display = ['judge', 'competition', 'status', 'assigned_at']
-    list_filter = ['status', 'competition', 'judge']
-    search_fields = ['judge__user__username', 'competition__name']
-    filter_horizontal = ['rounds']
+    list_display = ('judge', 'competition', 'status', 'assigned_at')
+    list_filter = ('status', 'competition', 'judge')
+    search_fields = ('judge__user__username', 'competition__name')
+    filter_horizontal = ('rounds',)
