@@ -5,7 +5,7 @@
     <div class="container mx-auto px-4">
         <!-- Header -->
         <div class="bg-white rounded-2xl shadow-sm p-6 mb-8">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+            <div class="flex flex-col space-y-6 md:space-y-0 md:flex-row md:justify-between items-center mb-8 mt-6">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">Manage Rounds</h1>
                     <div class="mt-2 flex items-center space-x-2">
@@ -13,19 +13,201 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                                 d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                         </svg>
-                        <p class="text-lg text-gray-600">{{ competition.name }}</p>
+                        <p class="text-lg text-gray-600">{{ competition.name|title }}</p>
                     </div>
                 </div>
+                <div class="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-6 w-full md:w-auto">
+                    {% if rounds %}
+                    <a href="{% url 'generate_pdf_results' competition.id %}" 
+                       class="relative inline-flex items-center px-8 py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-semibold rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg group overflow-hidden w-full sm:w-auto justify-center">
+                        <span class="absolute inset-0 bg-white/20 group-hover:bg-white/30 transition-opacity"></span>
+                        <svg class="h-5 w-5 mr-3 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="relative">Download PDF Results</span>
+                    </a>
+                    <button onclick="printResults()" 
+                            class="relative inline-flex items-center px-8 py-3.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-semibold rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg group overflow-hidden w-full sm:w-auto justify-center">
+                        <span class="absolute inset-0 bg-white/20 group-hover:bg-white/30 transition-opacity"></span>
+                        <svg class="h-5 w-5 mr-3 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                        </svg>
+                        <span class="relative">Print Results</span>
+                    </button>
+                    {% endif %}
+                </div>
                 <a href="{% url 'create_round' competition.id %}" 
-                   class="group inline-flex items-center px-6 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-all duration-200 transform hover:scale-105">
-                    <svg class="w-5 h-5 mr-2 transition-transform duration-200 transform group-hover:rotate-180" 
-                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   class="relative inline-flex items-center px-8 py-3.5 bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-500 bg-size-200 text-white text-sm font-semibold rounded-xl hover:bg-pos-100 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg group overflow-hidden w-full sm:w-auto justify-center">
+                    <span class="absolute inset-0 bg-white/20 group-hover:bg-white/30 transition-opacity"></span>
+                    <svg class="h-5 w-5 mr-3 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>
-                    Add New Round
+                    <span class="relative">Add New Round</span>
                 </a>
             </div>
         </div>
+
+        <!-- Print Results Modal -->
+        <div id="printModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+            <div class="bg-white rounded-2xl p-8 max-w-4xl w-full mx-4 transform transition-all duration-300 scale-95 opacity-0 shadow-2xl" id="modalContent">
+                <!-- Modal Header -->
+                <div class="border-b border-gray-200 pb-6 mb-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">Competition Results</h2>
+                            <p class="text-gray-600 mt-1">{{ competition.name }}</p>
+                        </div>
+                        <button onclick="closePrintModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results Content -->
+                <div class="space-y-6">
+                    <!-- Competition Info -->
+                    <div class="bg-gray-50 rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Competition Details</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-gray-600">Date</p>
+                                <p class="text-base font-medium text-gray-900">{{ competition.date|date:"F j, Y" }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Location</p>
+                                <p class="text-base font-medium text-gray-900">{{ competition.location }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Table -->
+                    <div class="overflow-hidden rounded-xl border border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Participant</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Score</th>
+                                    {% for round in rounds %}
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ round.name }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for result in competition_results %}
+                                <tr class="{% if forloop.counter <= 3 %}bg-emerald-50/50{% endif %} hover:bg-gray-50/80">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            {% if forloop.counter == 1 %}
+                                            <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-yellow-100 rounded-full">
+                                                <svg class="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M10 2a1 1 0 01.832.445l1.71 2.565 2.831.353a1 1 0 01.555 1.705l-2.047 1.995.483 2.815a1 1 0 01-1.45 1.054L10 11.937l-2.914 1.542a1 1 0 01-1.45-1.054l.483-2.815-2.047-1.995a1 1 0 01.555-1.705l2.831-.353 1.71-2.565A1 1 0 0110 2z" clip-rule="evenodd"/>
+                                                </svg>
+                                            </div>
+                                            {% elif forloop.counter == 2 %}
+                                            <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full">
+                                                <svg class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M10 2a1 1 0 01.832.445l1.71 2.565 2.831.353a1 1 0 01.555 1.705l-2.047 1.995.483 2.815a1 1 0 01-1.45 1.054L10 11.937l-2.914 1.542a1 1 0 01-1.45-1.054l.483-2.815-2.047-1.995a1 1 0 01.555-1.705l2.831-.353 1.71-2.565A1 1 0 0110 2z" clip-rule="evenodd"/>
+                                                </svg>
+                                            </div>
+                                            {% elif forloop.counter == 3 %}
+                                            <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-amber-100 rounded-full">
+                                                <svg class="w-5 h-5 text-amber-800" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M10 2a1 1 0 01.832.445l1.71 2.565 2.831.353a1 1 0 01.555 1.705l-2.047 1.995.483 2.815a1 1 0 01-1.45 1.054L10 11.937l-2.914 1.542a1 1 0 01-1.45-1.054l.483-2.815-2.047-1.995a1 1 0 01.555-1.705l2.831-.353 1.71-2.565A1 1 0 0110 2z" clip-rule="evenodd"/>
+                                                </svg>
+                                            </div>
+                                            {% else %}
+                                            <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full">
+                                                <span class="text-sm font-medium text-gray-600">{{ forloop.counter }}</span>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">{{ result.participant.name|title }}</div>
+                                        <div class="text-sm text-gray-500">{{ result.participant.team|title }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-semibold text-gray-900">{{ result.total_score }}</div>
+                                    </td>
+                                    {% for score in result.round_scores %}
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">{{ score }}</div>
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="mt-8 flex justify-end space-x-4">
+                    <button onclick="closePrintModal()" 
+                            class="px-6 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="window.print()" 
+                            class="px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors">
+                        Print
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            @media print {
+                body * {
+                    visibility: hidden;
+                }
+                #modalContent, #modalContent * {
+                    visibility: visible;
+                }
+                #modalContent {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    padding: 2rem;
+                }
+                .no-print {
+                    display: none !important;
+                }
+            }
+        </style>
+
+        <script>
+            function printResults() {
+                const modal = document.getElementById('printModal');
+                const modalContent = document.getElementById('modalContent');
+                
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                
+                setTimeout(() => {
+                    modalContent.classList.remove('scale-95', 'opacity-0');
+                    modalContent.classList.add('scale-100', 'opacity-100');
+                }, 50);
+            }
+
+            function closePrintModal() {
+                const modal = document.getElementById('printModal');
+                const modalContent = document.getElementById('modalContent');
+                
+                modalContent.classList.remove('scale-100', 'opacity-100');
+                modalContent.classList.add('scale-95', 'opacity-0');
+                
+                setTimeout(() => {
+                    modal.classList.remove('flex');
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        </script>
 
         <!-- Rounds List -->
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -92,7 +274,7 @@
                                        class="inline-flex items-center text-blue-600 hover:text-blue-900">
                                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0h2a2 2 0 002 2v3a2 2 0 01-2 2H9a2 2 0 01-2-2v-3a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0h2v-6a2 2 0 012-2h2a2 2 0 012 2v6a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                                         </svg>
                                         Results
                                     </a>
@@ -153,4 +335,262 @@
         </div>
     </div>
 </div>
+
+<style>
+    @media print {
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        
+        body {
+            visibility: hidden;
+            background: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        
+        #printModal {
+            visibility: visible;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: auto;
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        #printModal * {
+            visibility: visible;
+        }
+        
+        .print-content {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        .no-print,
+        button,
+        .modal-close {
+            display: none !important;
+        }
+        
+        /* Ensure backgrounds print */
+        .bg-emerald-50,
+        .bg-blue-50,
+        .bg-purple-50,
+        .bg-gray-50,
+        .bg-white,
+        [class*='bg-'] {
+            background-color: white !important;
+            border: 1px solid #e5e7eb !important;
+        }
+        
+        /* Improve text contrast for printing */
+        [class*='text-gray-'] {
+            color: #000 !important;
+        }
+        
+        [class*='text-emerald-'],
+        [class*='text-blue-'],
+        [class*='text-purple-'] {
+            color: #000 !important;
+        }
+        
+        /* Table improvements */
+        table {
+            width: 100% !important;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        tr {
+            page-break-inside: avoid !important;
+            page-break-after: auto !important;
+        }
+        
+        td, th {
+            border: 1px solid #e5e7eb !important;
+            padding: 8px !important;
+        }
+        
+        thead {
+            display: table-header-group !important;
+        }
+        
+        /* Section breaks */
+        .print-section {
+            page-break-before: always !important;
+        }
+        
+        /* Progress bars */
+        .bg-emerald-500 {
+            background-color: #000 !important;
+        }
+        
+        /* Improve borders */
+        .border,
+        .border-2,
+        [class*='border-'] {
+            border: 1px solid #000 !important;
+        }
+        
+        /* Improve spacing */
+        .space-y-8 > * + * {
+            margin-top: 2rem !important;
+        }
+        
+        .p-6 {
+            padding: 1.5rem !important;
+        }
+        
+        /* Headers */
+        h1 {
+            font-size: 24pt !important;
+            margin-bottom: 1rem !important;
+        }
+        
+        h2 {
+            font-size: 20pt !important;
+            margin-bottom: 0.8rem !important;
+        }
+        
+        h3 {
+            font-size: 16pt !important;
+            margin-bottom: 0.6rem !important;
+        }
+        
+        /* Round cards */
+        .rounded-xl {
+            border-radius: 0 !important;
+        }
+        
+        /* Ensure grid layout prints properly */
+        .grid {
+            display: block !important;
+        }
+        
+        .grid > * {
+            margin-bottom: 1rem !important;
+        }
+        
+        /* Remove shadows in print */
+        .shadow,
+        .shadow-sm,
+        .shadow-md,
+        .shadow-lg,
+        .shadow-xl {
+            box-shadow: none !important;
+        }
+        
+        /* Ensure proper page breaks */
+        .mb-12,
+        .mb-8,
+        .mb-6 {
+            margin-bottom: 2rem !important;
+        }
+        
+        /* Improve visibility of medals */
+        .bg-yellow-400,
+        .bg-gray-400,
+        .bg-amber-600 {
+            background-color: transparent !important;
+            border: 2px solid #000 !important;
+            color: #000 !important;
+        }
+    }
+
+    /* Rest of the styles remain unchanged */
+    #modalContent {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    #modalContent::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    #modalContent::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    #modalContent::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+
+    #modalContent::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    .print-content table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .bg-size-200 {
+        background-size: 200% 100%;
+    }
+    .bg-pos-0 {
+        background-position: 0% 0%;
+    }
+    .bg-pos-100 {
+        background-position: 100% 0%;
+    }
+    .hover\:bg-pos-100:hover {
+        background-position: 100% 0%;
+    }
+</style>
+
+<script>
+    function printResults() {
+        const modal = document.getElementById('printModal');
+        const modalContent = document.getElementById('modalContent');
+        
+        // Show the modal
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        // Add a small delay to ensure content is rendered
+        setTimeout(() => {
+            modalContent.classList.remove('scale-95', 'opacity-0');
+            modalContent.classList.add('scale-100', 'opacity-100');
+            
+            // Add another small delay before printing
+            setTimeout(() => {
+                window.print();
+            }, 300);
+        }, 50);
+    }
+    
+    function closePrintModal() {
+        const modal = document.getElementById('printModal');
+        const modalContent = document.getElementById('modalContent');
+        modalContent.classList.remove('scale-100', 'opacity-100');
+        modalContent.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }, 300);
+    }
+    
+    // Close modal when clicking outside
+    document.getElementById('printModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closePrintModal();
+        }
+    });
+    
+    // Listen for print event
+    window.addEventListener('beforeprint', function() {
+        document.body.classList.add('printing');
+    });
+    
+    window.addEventListener('afterprint', function() {
+        document.body.classList.remove('printing');
+    });
+</script>
 {% endblock %}

@@ -31,8 +31,8 @@ urlpatterns = [
            views.toggle_results_visibility, name='toggle_results_visibility'),
 
       # Round Results URL
-      path('competitions/<int:competition_id>/rounds/<int:round_id>/results/', 
-           views.round_results, name='round_results'),
+      path('competitions/<int:competition_id>/rounds/<int:round_id>/results/', views.round_results, name='round_results'),
+      path('competition/<int:competition_id>/pdf-results/', views.generate_results_pdf, name='generate_pdf_results'),
 
       # Participant Assignment URLs
       path('participant-management/', views.participant_management, name='participant_management'),

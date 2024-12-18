@@ -1,13 +1,26 @@
 from django.shortcuts import render
 from .models import (
     Competition, Participant, Judge, CompetitionResult, 
-    JudgeAssignment, ParticipantCompetition
+    JudgeAssignment, ParticipantCompetition, Score
 )
 from django.contrib.auth.models import User
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.db import transaction, models
 from decimal import Decimal
+from django.http import HttpResponse
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch, cm
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from io import BytesIO
+import os
+from django.conf import settings
+from datetime import datetime
 
 @login_required
 def logout_view(request):
@@ -19,7 +32,7 @@ def dashboard(request):
         'active_competitions': Competition.objects.filter(status='ACTIVE').count(),
         'total_participants': Participant.objects.count(),
         'total_judges': Judge.objects.count(),
-        'recent_competitions': Competition.objects.all().order_by('-created_at')[:5],
+        'recent_competitions': Competition.objects.all().order_by('-id')[:5],
         'upcoming_events': Competition.objects.filter(status='DRAFT').order_by('start_date')[:3],
     }
     
@@ -160,7 +173,7 @@ def create_competition(request):
 
 @login_required
 def competition_list(request):
-    competitions = Competition.objects.all().order_by('-created_at')
+    competitions = Competition.objects.all().order_by('-id')
     return render(request, 'competition_app/competition_list.html', {'competitions': competitions})
 
 @login_required
@@ -393,8 +406,7 @@ def scoring_panel(request, round_id):
     ).values_list('participant_id', flat=True).distinct()
     
     participants = Participant.objects.filter(
-        participantcompetition__competition=round_obj.competition,
-        status='ACTIVE'
+        participantcompetition__competition=round_obj.competition
     ).order_by('participantcompetition__number')
     
     # Mark which participants have submitted scores
@@ -523,49 +535,7 @@ def calculate_rankings(round_obj):
         result.save()
         previous_score = result.total_score
 
-@login_required
-def results_list(request):
-    competitions = Competition.objects.prefetch_related(
-        'rounds',
-        'rounds__criteria',
-        'rounds__results',
-        'rounds__results__participant',
-        'participants',
-        'judge_assignments__judge'
-    ).filter(status__in=['ACTIVE', 'COMPLETED']).order_by('-created_at')
 
-    for competition in competitions:
-        competition.total_participants = competition.participants.count()
-        competition.total_judges = competition.judge_assignments.filter(status='ACTIVE').count()
-        
-        for round in competition.rounds.all():
-            round.ordered_results = round.results.all().order_by('rank')
-            scores = [result.total_score for result in round.ordered_results]
-            
-            if scores:
-                round.stats = {
-                    'highest_score': max(scores),
-                    'average_score': sum(scores) / len(scores),
-                    'lowest_score': min(scores),
-                    'total_participants': len(scores)
-                }
-                
-                # Get top performers with more details
-                round.top_performers = round.ordered_results[:3]
-                for result in round.top_performers:
-                    result.participant.total_criteria_score = sum(
-                        score.score for score in result.participant.scores.filter(criterion__round=round)
-                    )
-
-    context = {
-        'competitions': competitions,
-        'total_competitions': competitions.count(),
-        'total_participants': Participant.objects.count(),
-        'total_judges': Judge.objects.count(),
-        'page_title': 'Competition Results'
-    }
-    
-    return render(request, 'competition_app/results_list.html', context)
 
 @login_required
 def competition_results_detail(request, competition_id):
@@ -784,7 +754,7 @@ def judge_management(request):
         messages.error(request, 'You do not have permission to access this page.')
         return redirect('dashboard')
         
-    competitions = Competition.objects.all().order_by('-created_at')
+    competitions = Competition.objects.all().order_by('-id')
     for competition in competitions:
         competition.judge_count = JudgeAssignment.objects.filter(competition=competition).count()
         
@@ -800,7 +770,7 @@ def participant_management(request):
         messages.error(request, 'You do not have permission to access this page.')
         return redirect('dashboard')
         
-    competitions = Competition.objects.all().order_by('-created_at')
+    competitions = Competition.objects.all().order_by('-id')
     for competition in competitions:
         competition.participant_count = competition.participants.count()
         
@@ -1210,3 +1180,211 @@ def round_results(request, competition_id, round_id):
     }
     
     return render(request, 'competition_app/round_management/round_results.html', context)
+
+@login_required
+def generate_results_pdf(request, competition_id):
+    """Generate a PDF report of competition results."""
+    competition = get_object_or_404(Competition, id=competition_id)
+    rounds = competition.rounds.all().order_by('order')
+    
+    # Create the HttpResponse object with PDF headers
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{competition.name}_results.pdf"'
+    
+    # Create the PDF object using ReportLab
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=72,
+        leftMargin=72,
+        topMargin=72,
+        bottomMargin=72
+    )
+    
+    # Container for the 'Flowable' objects
+    elements = []
+    
+    # Styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        spaceAfter=30,
+        alignment=1  # Center alignment
+    )
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=16,
+        spaceAfter=12,
+        textColor=colors.HexColor('#047857')  # Emerald color
+    )
+    normal_style = styles["Normal"]
+    
+    # Add competition title
+    elements.append(Paragraph(competition.name, title_style))
+    elements.append(Paragraph("Competition Results", heading_style))
+    elements.append(Spacer(1, 20))
+    
+    # Add competition info
+    info_data = [
+        ["Date:", datetime.now().strftime("%B %d, %Y")],
+        ["Total Rounds:", str(rounds.count())],
+        ["Total Participants:", str(competition.participants.count())]
+    ]
+    info_table = Table(info_data, colWidths=[100, 300])
+    info_table.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#047857')),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+    ]))
+    elements.append(info_table)
+    elements.append(Spacer(1, 30))
+    
+    # Add each round's results
+    for round_obj in rounds:
+        elements.append(Paragraph(f"Round {round_obj.order}: {round_obj.name}", heading_style))
+        elements.append(Paragraph(f"Weight: {round_obj.weight_percentage}%", normal_style))
+        elements.append(Spacer(1, 10))
+        
+        # Get results for this round
+        results = CompetitionResult.objects.filter(
+            round=round_obj
+        ).select_related('participant').order_by('rank')
+        
+        if results:
+            # Create table data
+            table_data = [['Rank', 'Participant', 'Score', 'Weighted Score']]
+            for result in results:
+                weighted_score = result.total_score * (round_obj.weight_percentage / 100)
+                table_data.append([
+                    str(result.rank),
+                    result.participant.name,
+                    f"{result.total_score:.2f}",
+                    f"{weighted_score:.2f}"
+                ])
+            
+            # Create and style the table
+            table = Table(table_data, colWidths=[50, 200, 100, 100])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#047857')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 10),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0fdf4')]),
+            ]))
+            elements.append(table)
+            elements.append(Spacer(1, 20))
+        
+    # Add final rankings
+    elements.append(Paragraph("Final Rankings", heading_style))
+    elements.append(Spacer(1, 10))
+    
+    # Calculate final rankings
+    final_rankings = []
+    for participant in competition.participants.all():
+        total_score = 0
+        for round_obj in rounds:
+            result = CompetitionResult.objects.filter(
+                round=round_obj,
+                participant=participant
+            ).first()
+            if result:
+                total_score += result.total_score * (round_obj.weight_percentage / 100)
+        final_rankings.append((participant, total_score))
+    
+    final_rankings.sort(key=lambda x: x[1], reverse=True)
+    
+    # Create final rankings table
+    final_table_data = [['Rank', 'Participant', 'Total Score', 'Performance']]
+    for idx, (participant, total_score) in enumerate(final_rankings, 1):
+        performance = "Outstanding" if total_score >= 90 else \
+                     "Excellent" if total_score >= 80 else \
+                     "Very Good" if total_score >= 70 else \
+                     "Good" if total_score >= 60 else "Needs Improvement"
+        
+        final_table_data.append([
+            str(idx),
+            participant.name,
+            f"{total_score:.2f}",
+            performance
+        ])
+    
+    final_table = Table(final_table_data, colWidths=[50, 200, 100, 100])
+    final_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#047857')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0fdf4')]),
+    ]))
+    
+    elements.append(final_table)
+    
+    # Add footer
+    elements.append(Spacer(1, 30))
+    footer_text = f"Generated on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}"
+    elements.append(Paragraph(footer_text, ParagraphStyle(
+        'Footer',
+        parent=styles['Normal'],
+        fontSize=8,
+        textColor=colors.gray,
+        alignment=1
+    )))
+    
+    # Build PDF
+    doc.build(elements)
+    
+    # Get the value of the BytesIO buffer and write it to the response
+    pdf = buffer.getvalue()
+    buffer.close()
+    response.write(pdf)
+    
+    return response
+
+@login_required
+def results_list(request):
+    competitions = Competition.objects.prefetch_related(
+        'rounds',
+        'rounds__results',
+        'rounds__results__participant'
+    ).order_by('-id')
+
+    # Prepare data for each competition
+    competition_results = []
+    for competition in competitions:
+        latest_round = competition.rounds.order_by('-id').first()
+        results_visible = competition.show_results
+        
+        competition_data = {
+            'competition': competition,
+            'latest_round': latest_round,
+            'results_visible': results_visible,
+            'total_participants': competition.participants.count(),
+            'total_rounds': competition.rounds.count(),
+        }
+        competition_results.append(competition_data)
+
+    return render(request, 'competition_app/results_list.html', {
+        'competition_results': competition_results,
+        'page_title': 'Competition Results'
+    })
