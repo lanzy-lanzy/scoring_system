@@ -71,10 +71,10 @@
         <!-- Main Content -->
         <div class="flex-1 sm:ml-64">
             <!-- Top Navigation -->
-            <nav class="bg-white border-b border-emerald-100 px-4 py-2.5 fixed left-0 right-0 top-0 z-40 sm:ml-64">
+            <nav class="bg-gradient-to-r from-emerald-700 to-emerald-900 border-b border-emerald-600 px-4 py-3 fixed left-0 right-0 top-0 z-40 sm:ml-64 shadow-lg">
                 <div class="flex flex-wrap justify-between items-center">
                     <div class="flex items-center justify-start">
-                        <button data-drawer-target="drawer-navigation" data-drawer-toggle="drawer-navigation" aria-controls="drawer-navigation" class="p-2 mr-2 text-gray-600 rounded-lg sm:hidden hover:text-gray-900 hover:bg-gray-100 focus:outline-none">
+                        <button data-drawer-target="drawer-navigation" data-drawer-toggle="drawer-navigation" aria-controls="drawer-navigation" class="p-2 mr-2 text-white rounded-lg sm:hidden hover:text-emerald-200 hover:bg-emerald-800 focus:outline-none transition duration-300">
                             <i class="fas fa-bars w-6 h-6"></i>
                         </button>
                     </div>
@@ -83,43 +83,43 @@
                             <div>
                                 <div class="flex items-center ml-3">
                                     <div class="relative">
-                                        <button type="button" class="flex text-sm bg-emerald-600 rounded-full focus:ring-4 focus:ring-emerald-800" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="dropdown">
+                                        <button type="button" class="flex text-sm bg-emerald-500 rounded-full focus:ring-4 focus:ring-emerald-400 p-0.5 hover:bg-emerald-400 transition duration-300" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="dropdown">
                                             {% if user.is_authenticated %}
                                                 {% if user.is_judge %}
                                                     {% if user.judge.profile_image %}
-                                                        <img class="w-8 h-8 rounded-full" src="{{ user.judge.profile_image.url }}" alt="user photo">
+                                                        <img class="w-9 h-9 rounded-full border-2 border-white" src="{{ user.judge.profile_image.url }}" alt="user photo">
                                                     {% else %}
-                                                        <img class="w-8 h-8 rounded-full" src="{{ user.judge.get_profile_image_url }}" alt="user photo">
+                                                        <img class="w-9 h-9 rounded-full border-2 border-white" src="{{ user.judge.get_profile_image_url }}" alt="user photo">
                                                     {% endif %}
                                                 {% else %}
-                                                    <img class="w-8 h-8 rounded-full" src="https://ui-avatars.com/api/?name={{ user.username|urlencode }}" alt="user photo">
+                                                    <img class="w-9 h-9 rounded-full border-2 border-white" src="https://ui-avatars.com/api/?name={{ user.username|urlencode }}&background=16a34a&color=fff" alt="user photo">
                                                 {% endif %}
                                             {% else %}
-                                                <img class="w-8 h-8 rounded-full" src="https://ui-avatars.com/api/?name=Guest" alt="user photo">
+                                                <img class="w-9 h-9 rounded-full border-2 border-white" src="https://ui-avatars.com/api/?name=Guest&background=16a34a&color=fff" alt="user photo">
                                             {% endif %}
                                         </button>
                                         <!-- Dropdown menu -->
-                                        <div class="hidden z-50 my-4 w-56 text-base list-none bg-white rounded divide-y divide-gray-100 shadow" id="dropdown">
+                                        <div class="hidden z-50 my-4 w-56 text-base list-none bg-white rounded-lg divide-y divide-gray-100 shadow-lg transform origin-top-right transition duration-200" id="dropdown">
                                             {% if user.is_authenticated %}
-                                            <div class="py-3 px-4">
-                                                <span class="block text-sm font-semibold text-gray-900">{{ user.username }}</span>
-                                                <span class="block text-sm text-gray-500 truncate">{{ user.email }}</span>
+                                            <div class="py-3 px-4 bg-emerald-50">
+                                                <span class="block text-sm font-semibold text-emerald-900">{{ user.username }}</span>
+                                                <span class="block text-sm text-emerald-600 truncate">{{ user.email }}</span>
                                             </div>
                                             <ul class="py-1" aria-labelledby="dropdown">
                                                 <li>
-                                                    <a href="{% url 'edit_profile' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-emerald-100"><i class="fas fa-user mr-2"></i>Profile</a>
+                                                    <a href="{% url 'edit_profile' %}" class="flex items-center py-2 px-4 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition duration-200"><i class="fas fa-user mr-2 text-emerald-500"></i>Profile</a>
                                                 </li>
                                                 <li>
-                                                    <a href="{% url 'settings' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-emerald-100"><i class="fas fa-cog mr-2"></i>Settings</a>
+                                                    <a href="{% url 'settings' %}" class="flex items-center py-2 px-4 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition duration-200"><i class="fas fa-cog mr-2 text-emerald-500"></i>Settings</a>
                                                 </li>
                                                 <li>
-                                                    <a href="{% url 'logout' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-emerald-100"><i class="fas fa-sign-out-alt mr-2"></i>Logout</a>
+                                                    <a href="{% url 'logout' %}" class="flex items-center py-2 px-4 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition duration-200"><i class="fas fa-sign-out-alt mr-2 text-emerald-500"></i>Logout</a>
                                                 </li>
                                             </ul>
                                             {% else %}
                                             <ul class="py-1">
                                                 <li>
-                                                    <a href="{% url 'login' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-emerald-100"><i class="fas fa-sign-in-alt mr-2"></i>Login</a>
+                                                    <a href="{% url 'login' %}" class="flex items-center py-2 px-4 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition duration-200"><i class="fas fa-sign-in-alt mr-2 text-emerald-500"></i>Login</a>
                                                 </li>
                                             </ul>
                                             {% endif %}
@@ -128,10 +128,10 @@
                                 </div>                                                        </div>
                         </div>
                     </div>
-                    <div class="flex items-center">
-                        <a href="{% url 'competition_list' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Competitions</a>
-                        <a href="{% url 'participant_list' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Participants</a>
-                        <a href="{% url 'results_list' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Results</a>
+              <div class="flex items-center">
+                        <a href="{% url 'results_list' %}" class="text-white hover:bg-emerald-600 px-4 py-2 rounded-lg text-sm font-medium transition duration-300 flex items-center">
+                            <i class="fas fa-trophy mr-2"></i>Results
+                        </a>
                     </div>
                 </div>
             </nav>

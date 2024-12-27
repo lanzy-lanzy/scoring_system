@@ -1388,3 +1388,20 @@ def results_list(request):
         'competition_results': competition_results,
         'page_title': 'Competition Results'
     })
+def toggle_competition_status(request, competition_id):
+    if request.method == 'POST':
+        competition = get_object_or_404(Competition, id=competition_id)
+        
+        # Define the status flow
+        status_flow = {
+            'DRAFT': 'ACTIVE',
+            'ACTIVE': 'COMPLETED',
+            'COMPLETED': 'DRAFT'
+        }
+        
+        # Update the status
+        competition.status = status_flow[competition.status]
+        competition.save()
+        
+        messages.success(request, f'Competition status updated to {competition.status}')
+        return redirect('competition_list')

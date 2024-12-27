@@ -60,4 +60,8 @@ urlpatterns = [
       path('competitions/<int:competition_id>/rounds/<int:round_id>/edit/', views.edit_round, name='edit_round'),
       path('competitions/<int:competition_id>/rounds/<int:round_id>/delete/', views.delete_round, name='delete_round'),
       path('competitions/<int:competition_id>/rounds/<int:round_id>/toggle-status/', views.toggle_round_status, name='toggle_round_status'),
+
+      # Score Management URLs 
+      path('competition/<int:competition_id>/toggle-status/', views.toggle_competition_status, name='toggle_competition_status'),
+
 ]
